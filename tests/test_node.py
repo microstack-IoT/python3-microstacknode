@@ -11,7 +11,9 @@ import microstacknode.core
 class TestMicrostackNode(unittest.TestCase):
 
     def test_node(self):
-        microstacknode.core.start()
+        node = microstacknode.core.MicrostackNode()
+        node.handshake()
+        node.run()
 
 
 if __name__ == "__main__":
