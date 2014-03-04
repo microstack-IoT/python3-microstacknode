@@ -1,6 +1,7 @@
 # http://www.gsm-rainbow.ru/sites/default/files/
 # l80_gps_protocol_specification_v1.0.pdf
 import threading
+import subprocess
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
@@ -24,6 +25,14 @@ class L80GPS(threading.Thread):
                         self._gpgll = line
                         logging.debug("L80GPS:Setting GPGLL to {}"
                                       .format(line))
+                        subprocess.call(['sudo su -c "echo 1 > '
+                                         '/sys/class/leds/led0/brightness"'],
+                                        shell=True)
+                        time.sleep(0.3)
+                        subprocess.call(['sudo su -c "echo 0 > '
+                                         '/sys/class/leds/led0/brightness"'],
+                                        shell=True)
+                        time.sleep(0.2)
             if self._running is False:
                 break
 
