@@ -1,29 +1,26 @@
-microstackserver
+microstack-node
 ================
-
-Common functions for interacting with PiFace products.
-
+Common functions for interacting with Microstack node boards (Accelerometer,
+GPS, etc).
 
 Documentation
 =============
-
-[http://microstack.github.io/microstackserver/](http://microstack.github.io/microstackserver/)
+[http://microstack.github.io/microstack-node/](http://microstack.github.io/microstack-node/)
 
 You can also find the documentation installed at:
 
-    /usr/share/doc/python3-microstackserver/
+    /usr/share/doc/python3-microstack-node/
 
 Install
 =======
-
 Make sure you are using the lastest version of Raspbian:
 
     $ sudo apt-get update
     $ sudo apt-get upgrade
 
-Install `microstackserver` (for Python 3 and 2) with the following command:
+Install `microstack-node` (for Python 3 and 2) with the following command:
 
-    $ sudo apt-get install python{,3}-microstackserver
+    $ sudo apt-get install python{,3}-microstack-node
 
 
 Enable Serial Port on Raspberry Pi for GPS

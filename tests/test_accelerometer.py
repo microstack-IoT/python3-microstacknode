@@ -16,15 +16,12 @@ class TestMMA8452Q(unittest.TestCase):
     def test_MMA8452Q(self):
         try:
             while True:
-                # x, y, z = self.accelerometer.get_xyz(raw=True, res12=False)
-                # print(" 8-bit raw X: {:}, Y: {:}, Z: {:}".format(bin(x),
-                #                                                  bin(y),
-                #                                                  bin(z)))
                 x, y, z = self.accelerometer.get_xyz(res12=False)
-                print(" 8-bit X: {:.12}, Y: {:.12}, Z: {:.12}".format(x, y, z))
-                # x, y, z = self.accelerometer.get_xyz()
-                # print("12-bit X: {:.12}, Y: {:.12}, Z: {:.12}".format(x, y, z))
-                print()
+                x = "X:{:.6}".format(x)
+                y = "Y:{:.6}".format(y)
+                z = "Z:{:.6}".format(z)
+                print(" 8-bit {:12}, {:12}, {:12}".format(x, y, z))
+                # print()
                 time.sleep(0.1)
         except KeyboardInterrupt:
             pass
