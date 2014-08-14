@@ -3,6 +3,7 @@
 import threading
 import subprocess
 import logging
+import time
 logging.basicConfig(level=logging.DEBUG)
 
 
@@ -45,13 +46,16 @@ class L80GPS(threading.Thread):
                         time.sleep(0.2)
 
             elif "$PMTKLOG" in line:
-                if self._pmtk_response is None:
-                    self._pmtk_response = line
+                logging.debug("L80GPS:Found PMTKLOG, adding to response:{}".format(
+                    line))
+                if self._pmtk_rep_buf is None:
+                    self._pmtk_rep_buf = line
                 else:
-                    self._pmtk_response += line
+                    self._pmtk_rep_buf += line
 
-            elif "$PMTK001":
-                # PMTK ACK, do something with the buffer (after clearing it)
+            elif "$PMTK001" in line:
+                logging.debug("L80GPS:Found PMTKACK, dealing with response")
+                logging.debug("L80GPS:self._pmtk_rep_buf is " + self._pmtk_rep_buf)
                 buf = self._pmtk_rep_buf
                 self._pmtk_rep_buf = None
                 if self._pmtk_response is not None:
@@ -65,22 +69,28 @@ class L80GPS(threading.Thread):
 
     def _pmtk_response(self, response):
         """Acts on the PMTK response."""
+        logging.debug("L80GPS:Acting on response (Making callback)")
         if self._pmtk_callback:
+            logging.debug("L80GPS:There is a callback")
             self._pmtk_callback(response)
 
     def locus_query(self, callback):
+        logging.debug("L80GPS:locus query")
         self._pmtk_callback = callback
         self.device_tx.write(PMTK_LOCUS_QUERY_STATUS)
 
     def locus_erase(self):
+        logging.debug("L80GPS:locus erase")
         self._pmtk_callback = None
         self.device_tx.write(PMTK_LOCUS_ERASE_FLASH)
 
     def locus_start_stop(self):
+        logging.debug("L80GPS:locus start_stop")
         self._pmtk_callback = None
         self.device_tx.write(PMTK_LOCUS_STOP_LOGGER)
 
     def locus_query_data(self, callback):
+        logging.debug("L80GPS:locus query_data")
         self._pmtk_callback = callback
         self.device_tx.write(PMTK_LOCUS_QUERY_STATUS)
 

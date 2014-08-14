@@ -14,9 +14,7 @@ class TestL80GPS(unittest.TestCase):
         self.gps.start()
 
     def test_locus_query(self):
-        def print_response(r):
-            print(r)
-        self.gps.locus_query(print_response)
+        self.gps.locus_query(lambda r: print(r))
 
 if __name__ == "__main__":
     unittest.main()
