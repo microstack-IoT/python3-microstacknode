@@ -6,19 +6,29 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 
+PMTK_LOCUS_QUERY_STATUS = "$PMTK183*38\r\n"
+PMTK_LOCUS_ERASE_FLASH = "$PMTK184,1*22\r\n"
+PMTK_LOCUS_STOP_LOGGER  ="$PMTK185,1*23\r\n" # start/stop
+PMTK_Q_LOCUS_DATA = "$PMTK622,1*29\r\n"
+
+
 class L80GPS(threading.Thread):
     """Thread that reads a stream of L80 GPS protocol lines and stores the
     information."""
 
-    def __init__(self, input_stream):
+    def __init__(self, device="/dev/ttyAMA0"):
         super().__init__()
-        self.input_stream = input_stream
+        self.device = device
+        self.device_tx = open(self.device, "w")
+        self.device_rx = open(self.device, "r")
         self._running = False
         self._gpgll = None
+        self._pmtk_response = None
+        self._pmtk_rep_buf = None
 
     def run(self):
         self._running = True
-        for line in self.input_stream:
+        for line in self.device_rx:
             if ("GPGLL" in line
                     and l80gps_checksum_is_valid(line)
                     and gpgll_as_dict(line)[0]['data_valid'] == "A"):
@@ -33,11 +43,46 @@ class L80GPS(threading.Thread):
                                          '/sys/class/leds/led0/brightness"'],
                                         shell=True)
                         time.sleep(0.2)
+
+            elif "$PMTKLOG" in line:
+                if self._pmtk_response is None:
+                    self._pmtk_response = line
+                else:
+                    self._pmtk_response += line
+
+            elif "$PMTK001":
+                # PMTK ACK, do something with the buffer (after clearing it)
+                buf = self._pmtk_rep_buf
+                self._pmtk_rep_buf = None
+                if self._pmtk_response is not None:
+                    self._pmtk_response(buf)
+
             if self._running is False:
                 break
 
     def stop(self):
         self._running = False
+
+    def _pmtk_response(self, response):
+        """Acts on the PMTK response."""
+        if self._pmtk_callback:
+            self._pmtk_callback(response)
+
+    def locus_query(self, callback):
+        self._pmtk_callback = callback
+        self.device_tx.write(PMTK_LOCUS_QUERY_STATUS)
+
+    def locus_erase(self):
+        self._pmtk_callback = None
+        self.device_tx.write(PMTK_LOCUS_ERASE_FLASH)
+
+    def locus_start_stop(self):
+        self._pmtk_callback = None
+        self.device_tx.write(PMTK_LOCUS_STOP_LOGGER)
+
+    def locus_query_data(self, callback):
+        self._pmtk_callback = callback
+        self.device_tx.write(PMTK_LOCUS_QUERY_STATUS)
 
     @property
     def gpgll(self):
