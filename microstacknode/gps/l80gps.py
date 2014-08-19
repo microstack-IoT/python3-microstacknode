@@ -25,10 +25,10 @@ class GPGLLInvalidError(Exception):
     pass
 
 
-# class L80GPS(threading.Thread):
 class L80GPS(object):
     """Thread that reads a stream of L80 GPS protocol lines and stores the
-    information."""
+    information.
+    """
 
     def __init__(self, device="/dev/ttyAMA0"):
         super().__init__()
@@ -67,6 +67,7 @@ class L80GPS(object):
         """Returns a byte array of the log data (you can parse this later).
 
         Example packets returned:
+
 
         Data: $PMTKLOX,1,0,0100010B,1F000000,0F000000,0000100B,00000000,
               00000000,00000003,FFFFFFFF,FFFFFFFF,FFFFFFFF,FFFFFFFF,
@@ -114,36 +115,32 @@ class L80GPS(object):
         # lon (4)
         # height (2)
         # checksum (1)
+        # DEBUGING
+        # sample data: bytearray(b'\x01\x00\x01\x0b\x1f\x00\x00\x00\x0f\x00\x00\x00\x00\x00\x10\x0b')
         data.reverse()
-        sensible_data = []
+        parsed_data = []
         while True:
             try:
-                utc = [data.pop(), data.pop(), data.pop(), data.pop()]
-                # print("utc", utc)
-                fix = data.pop()
-                # print("fix", fix)
-                lat = [data.pop(), data.pop(), data.pop(), data.pop()]
-                # print("lat", lat)
-                lon = [data.pop(), data.pop(), data.pop(), data.pop()]
-                # print("lon", lon)
-                height = [data.pop(), data.pop()]
-                # print("height", height)
-                checksum = data.pop()
-                # print("checksum", checksum)
+                data_bytes = [data.pop() for i in range(16)]
             except IndexError:
-                return sensible_data
+                return parsed_data
             else:
-                utc = parse_long(utc)
-                if utc >= 0xffffffff:
+                utc = parse_long(data_bytes[:4])
+                checksum = data_bytes[15]
+                if not checksum_is_valid(data_bytes[:15], checksum):
+                    # invalid checksum, this datum is useless
                     continue
-                # TODO also parse checksum
-                # TODO fix lat/long (they report None)
-                sensible_data.append({'utc': datetime.date.fromtimestamp(utc),
-                                      'fix': fix,
-                                      'lat': parse_float(lat),
-                                      'lon': parse_float(lon),
-                                      'height': parse_int(height),
-                                      'checksum': checksum})
+                elif utc >= 0xffffffff:
+                    # data is empty, don't add to parsed_data
+                    continue
+                else:
+                    parsed_data.append(
+                        {'utc': datetime.date.fromtimestamp(utc),
+                         'fix': data_bytes[4],
+                         'lat': parse_float(data_bytes[5:9]),
+                         'lon': parse_float(data_bytes[9:13]),
+                         'height': parse_int(data_bytes[13:15]),
+                         'checksum': checksum})
 
 
     def get_nmea_pkt(self, pattern):
@@ -258,12 +255,17 @@ def l80gps_checksum_is_valid(gps_str):
         # logging.debug(gps_str)
         return False
     else:
-        check = 0
-        for char in gpgll:
-            # logging.debug("char is"+char)
-            # check ^= ord(char)
-            check ^= char
-        return check == int(checksum, 16)  # checksum is hex string
+      return checksum_is_valid(gpgll, int(checksum, 16))
+
+
+def checksum_is_valid(data_bytes, checksum):
+    """Returns True is the logical OR of each consecutive databyte is
+    the same as the checksum.
+    """
+    check = 0
+    for b in data_bytes:
+      check ^= b
+    return check == checksum
 
 
 def hexstr2bytearray(s):
