@@ -12,28 +12,23 @@ class TestL80GPS(unittest.TestCase):
     def setUp(self):
         self.gps = microstacknode.gps.l80gps.L80GPS()
 
-    # @unittest.skip
+    # @unittest.skip('')
     # def test_locus_query(self):
     #     self.gps.locus_query()
 
-    # @unittest.skip
+    # @unittest.skip('')
     # def test_locus_erase(self):
     #     pass
     #     # self.gps.locus_erase()
 
-    # @unittest.skip
-    # def test_locus_start_stop(self):
-    #     pass
-    #     # self.gps.locus_start_stop()
+    # def test_locus_start(self):
+    #     self.gps.locus_start()
 
-    # @unittest.skip
+    # @unittest.skip('')
     # def test_locus_query_data(self):
     #     self.gps.locus_query_data()
 
     def test_locus_query_data_and_parsing(self):
-        print("Starting locus")
-        self.gps.locus_start_stop()
-
         print("Getting data.")
         attempt = 0
         success = False
@@ -51,9 +46,6 @@ class TestL80GPS(unittest.TestCase):
         print("=================\nParsing data.\n=================")
         for d in self.gps.parse_locus_data(data):
             print(d)
-
-        print("Stopping locus")
-        self.gps.locus_start_stop()
 
 
 if __name__ == "__main__":
