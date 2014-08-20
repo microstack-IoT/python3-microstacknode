@@ -22,7 +22,7 @@ class NMEAPacketNotFoundError(Exception):
     pass
 
 
-class GPGLLInvalidError(Exception):
+class DataInvalidError(Exception):
     pass
 
 
@@ -32,7 +32,8 @@ class LOCUSQueryDataError(Exception):
 
 class L80GPS(object):
     """Thread that reads a stream of L80 GPS protocol lines and stores the
-    information.
+    information. Methods may raise exceptions if data is invalid (usually
+    becasue of a poor GPS reception - try moving the GPS module outside).
     """
 
     def __init__(self, device="/dev/ttyAMA0"):
@@ -46,21 +47,71 @@ class L80GPS(object):
                                           rtscts=0)
 
     @property
-    def gpgll(self):
-        """Returns the latest GPGLL message. Will raise exception if
-        data is invalid (usually becasue of a poor GPS reception - try
-        moving the GPS module outside).
+    def gprmc(self):
+        """Returns the latest GPRMC message.
 
-        :rasies: GPGLLInvalidError
+        :rasies: DataInvalidError
+        """
+        pkt = self.get_nmea_pkt('GPRMC')
+        gprmc_dict, checksum = gprmc_as_dict(pkt)
+        if gprmc_dict['data_valid'] == "A":
+            return gprmc_dict
+        else:
+            raise DataInvalidError("Indicated by data_valid field.")
+
+    @property
+    def gpvtg(self):
+        """Returns the latest GPVTG message."""
+        pkt = self.get_nmea_pkt('GPVTG')
+        gpvtg_dict, checksum = gpvtg_as_dict(pkt)
+        return gpvtg_dict
+
+    @property
+    def gpgga(self):
+        """Returns the latest GPGGA message.
+
+        :rasies: DataInvalidError
+        """
+        pkt = self.get_nmea_pkt('GPGGA')
+        gpgga_dict, checksum = gprmc_as_dict(pkt)
+        if gpgga_dict['data_valid'] == "A":
+            return gpgga_dict
+        else:
+            raise DataInvalidError("Indicated by data_valid field.")
+
+    @property
+    def gpgsa(self):
+        """Returns the latest GPGSA message."""
+        pkt = self.get_nmea_pkt('GPGSA')
+        gpgsa_dict, checksum = gprmc_as_dict(pkt)
+        return gpgsa_dict
+
+    @property
+    def gpgsv(self):
+        """Returns the latest GPGSV message."""
+        pkt = self.get_nmea_pkt('GPGSV')
+        gpgsv_dict, checksum = gprmc_as_dict(pkt)
+        return gpgsv_dict
+
+    @property
+    def gpgll(self):
+        """Returns the latest GPGLL message.
+
+        :rasies: DataInvalidError
         """
         pkt = self.get_nmea_pkt('GPGLL')
         gpgll_dict, checksum = gpgll_as_dict(pkt)
         if gpgll_dict['data_valid'] == "A":
             return gpgll_dict
         else:
-            raise GPGLLInvalidError("Indicated by data_valid field.")
+            raise DataInvalidError("Indicated by data_valid field.")
 
-    # TODO a couple more properties for the standard L80GPS messages
+    @property
+    def gptxt(self):
+        """Returns the latest GPTXT message."""
+        pkt = self.get_nmea_pkt('GPTXT')
+        gptxt_dict, checksum = gprmc_as_dict(pkt)
+        return gptxt_dict
 
     def locus_query(self):
         """Returns the status of the locus logger."""
@@ -206,6 +257,162 @@ def parse_locus_data(data, format='basic'):
                      'checksum': checksum})
 
 
+def gprmc_as_dict(pkt):
+"""
+GPRMC Message ID
+UTC time Time in format ‘hhmmss.sss’
+Data valid
+‘V’ =Invalid
+‘A’ = Valid
+Latitude Latitude in format ‘ddmm.mmmm’ (degree and minutes)
+N/S
+‘N’ = North
+‘S’ = South
+Longitude Longitude in format ‘dddmm.mmmm’ (degree and minutes)
+E/W
+‘E’ = East
+‘W’ = West
+Speed Speed over ground in knots
+COG Course over ground in degree
+Date Date in format ‘ddmmyyyy’
+Magnetic variation Magnetic variation in degree, not being output
+E/W Magnetic variation E/W indicator, not being output
+Positioning mode
+‘N’ = No fix
+‘A’ = Autonomous GNSS fix
+‘D’ = Differential GNSS fix
+"""
+
+def gpvtg_as_dict(self):
+"""
+GPVTG Message ID
+COG(T) Course over ground (true) in degree
+T Fixed field, true
+COG(M) Course over ground (magnetic), not being output
+M Fixed field, magnetic
+Speed Speed over ground in knots
+N Fixed field, knots
+Speed Speed over ground in km/h
+k Fixed field, km/h
+Positionin
+"""
+
+def gpgga_as_dict(self):
+"""
+UTC time Time in format ‘hhmmss.sss’
+Data valid
+‘V’ =Invalid
+‘A’ = Valid
+Latitude Latitude in format ‘ddmm.mmmm’ (degree and minutes)
+N/S
+‘N’ = North
+‘S’ = South
+Longitude Longitude in format ‘dddmm.mmmm’ (degree and minutes)
+E/W
+‘E’ = East
+‘W’ = West
+Fix status
+‘0’ =Invalid
+‘1’ = GNSS fix
+‘2’ = DGPS fix
+Number of SV Number of satellites being used (0 ~ 12)
+HDOP Horizontal Dilution Of Precision
+Altitude Altitude in meters according to WGS84 ellipsoid
+M Fixed field, meter
+GeoID separation Height of GeoID (mean sea level) above WGS84 ellipsoid, meter
+M Fixed field, meter
+DGPS age Age of DGPS data in seconds, empty if DGPS is not used
+DGPS station ID DGPS station ID, empty if DGPS is not used
+"""
+
+
+def gpgsa_as_dict(self):
+"""
+Mode
+Auto selection of 2D or 3D fix
+‘M’ = Manual, forced to switch 2D/3D mode
+‘A’ = Allowed to automatically switch 2D/3D mode
+Fix status
+‘1’ = No fix
+‘2’ = 2D fix
+‘3’ = 3D fix
+Satellite used 1 Satellite used on channel 1
+Satellite used 2 Satellite used on channel 2
+Satellite used 3 Satellite used on channel 3
+Satellite used 4 Satellite used on channel 4
+Satellite used 5 Satellite used on channel 5
+Satellite used 6 Satellite used on channel 6
+Satellite used 7 Satellite used on channel 7
+Satellite used 8 Satellite used on channel 8
+Satellite used 9 Satellite used on channel 9
+Satellite used 10 Satellite used on channel 10
+Satellite used 11 Satellite used on channel 11
+Satellite used 12 Satellite used on channel 12
+PDOP Position Dilution Of Precision
+HDOP Horizontal Dilution Of Precision
+VDOP Vertical Dilution Of Precision
+"""
+
+def gpgsv_as_dict(self):
+    """Returns the GPGSV as a dictionary and the checksum.
+
+        >>> gpgsv_as_dict('$GPGSV,3,1,12,01,05,060,18,02,17,259,43,04,56,287,28,09,08,277,28*77')
+        ({'message_id': 'GPGSV',
+          'num_messages': 3,
+          'sequence_num': 1,
+          'satellites_in_view': 12,
+          'satellite_1_id': 01,
+          'satellite_1_elevation': 05,
+          'satellite_1_azimuth': 060,
+          'satellite_1_snr': 18,
+          'satellite_2_id': 02,
+          'satellite_2_elevation':17,
+          'satellite_2_azimuth':259,
+          'satellite_2_snr':43,
+          'satellite_3_id':04,
+          'satellite_3_elevation':56,
+          'satellite_3_azimuth':287,
+          'satellite_3_snr':28,
+          'satellite_4_id':09,
+          'satellite_4_elevation':08,
+          'satellite_4_azimuth':277,
+          'satellite_4_snr': 28},
+          77)
+    """
+    gpgsv, checksum = gpgsv_str[1:].split("*")  # remove `$` split *
+    message_id, num_messages, sequence_num, satellites_in_view, \
+        satellite_1_id, satellite_1_elevation, satellite_1_azimuth, \
+        satellite_1_snr, satellite_2_id, satellite_2_elevation, \
+        satellite_2_azimuth, satellite_2_snr, satellite_3_id, \
+        satellite_3_elevation, satellite_3_azimuth, satellite_3_snr, \
+        satellite_4_id, satellite_4_elevation, satellite_4_azimuth, \
+        satellite_4_snr = gpgsv.split(",")
+    latitude = 0.0 if latitude == '' else latitude
+    longitude = 0.0 if longitude == '' else longitude
+    utc = 0.0 if utc == '' else utc
+    gpgsv_dict = {'message_id': message_id,
+                  'num_messages': num_messages,
+                  'sequence_num': sequence_num,
+                  'satellites_in_view': satellites_in_view,
+                  'satellite_1_id': satellite_1_id,
+                  'satellite_1_elevation': satellite_1_elevation,
+                  'satellite_1_azimuth': satellite_1_azimuth,
+                  'satellite_1_snr': satellite_1_snr,
+                  'satellite_2_id': satellite_2_id,
+                  'satellite_2_elevation':satellite_2_elevation,
+                  'satellite_2_azimuth':satellite_2_azimuth,
+                  'satellite_2_snr':satellite_2_snr,
+                  'satellite_3_id':satellite_3_id,
+                  'satellite_3_elevation':satellite_3_elevation,
+                  'satellite_3_azimuth':satellite_3_azimuth,
+                  'satellite_3_snr':satellite_3_snr,
+                  'satellite_4_id':satellite_4_id,
+                  'satellite_4_elevation':satellite_4_elevation,
+                  'satellite_4_azimuth':satellite_4_azimuth,
+                  'satellite_4_snr': satellite_4_snr}
+    return (gpgsv_dict, checksum)
+
+
 def gpgll_as_dict(gpgll_str):
     """Returns the GPGLL as a dictionary and the checksum.
 
@@ -238,6 +445,22 @@ def gpgll_as_dict(gpgll_str):
                   checksum)
     # logging.debug("L80GPS:Converting '{}'\ninto: {}".format(gpgll_str, gpgll_dict))
     return gpgll_dict
+
+
+def gptxt_as_dict(self):
+"""
+GPTXT Message ID
+XX Total number of messages in this transmission. (01~99)
+YY Message number in this transmission. (01~99)
+ZZ
+Severity of the message
+‘00’= ERROR
+‘01’= WARNING
+‘02’= NOTICE
+‘07’= USER
+Text messasage
+"""
+    pass
 
 
 def pmtklog_as_dict(pmtklog_str):
