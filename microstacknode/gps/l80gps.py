@@ -14,7 +14,7 @@ PMTK_LOCUS_QUERY_STATUS = '$PMTK183*38\r\n'
 PMTK_LOCUS_ERASE_FLASH = '$PMTK184,1*22\r\n'
 PMTK_LOCUS_STOP_LOGGER = '$PMTK185,1*23\r\n'
 PMTK_LOCUS_START_LOGGER = '$PMTK185,0*22\r\n'
-PMTK_Q_LOCUS_DATA_FULL = '$PMTK622,0*29\r\n'
+PMTK_Q_LOCUS_DATA_FULL = '$PMTK622,0*28\r\n'
 PMTK_Q_LOCUS_DATA_PARTIAL = '$PMTK622,1*29\r\n'
 
 
@@ -23,6 +23,10 @@ class NMEAPacketNotFoundError(Exception):
 
 
 class GPGLLInvalidError(Exception):
+    pass
+
+
+class LOCUSQueryDataError(Exception):
     pass
 
 
@@ -43,12 +47,20 @@ class L80GPS(object):
 
     @property
     def gpgll(self):
+        """Returns the latest GPGLL message. Will raise exception if
+        data is invalid (usually becasue of a poor GPS reception - try
+        moving the GPS module outside).
+
+        :rasies: GPGLLInvalidError
+        """
         pkt = self.get_nmea_pkt('GPGLL')
         gpgll_dict, checksum = gpgll_as_dict(pkt)
         if gpgll_dict['data_valid'] == "A":
             return gpgll_dict
         else:
             raise GPGLLInvalidError("Indicated by data_valid field.")
+
+    # TODO a couple more properties for the standard L80GPS messages
 
     def locus_query(self):
         """Returns the status of the locus logger."""
@@ -68,7 +80,34 @@ class L80GPS(object):
         """Stops the logger."""
         self.send_nmea_pkt(PMTK_LOCUS_STOP_LOGGER)
 
-    def locus_query_data(self):
+    def locus_query_data(self, raw=False, num_attempts=5):
+        """Returns a list of parsed LOCUS log data.
+
+        :param raw: Return raw bytearray instead of list of dict's.
+        :type raw: boolean
+        :param num_attempts: Number of attempts to get raw data (it sometimes
+                             fails)
+        :type num_attempts: int
+        :rasies: LOCUSQueryDataError
+        """
+        attempt = 0
+        success = False
+        while success == False and attempt < num_attempts:
+            try:
+                data = self._locus_query_data_raw()
+            except NMEAPacketNotFoundError:
+                attempt += 1
+            else:
+                success = True
+        if not success:
+            raise LOCUSQueryDataError(
+                "Max number of attempts ({}) reached.".format(num_attempts))
+        elif raw:
+            return data
+        else:
+            return parse_locus_data(data)
+
+    def _locus_query_data_raw(self):
         """Returns a byte array of the log data (you can parse this later).
 
         Example packets returned:
@@ -112,14 +151,11 @@ class L80GPS(object):
         return databytes
 
     def get_nmea_pkt(self, pattern):
-        """Returns the next valid NMEA which contains the pattern provided.
-        For example:
+        """Returns the next valid NMEA string which contains the pattern
+        provided. For example:
 
-            gps.get_nmea_pkt('GPRMC')
-
-        Returns
-
-            $GPRMC,013732.000,A,3150.7238,N,11711.7278,E,0.00,0.00,220413,,,A*68
+            >>> gps.get_nmea_pkt('GPRMC')
+            '$GPRMC,013732.000,A,3150.7238,N,11711.7278,E,0.00,0.00,220413,,,A*68'
 
         """
         pattern_bytes = bytes(pattern, 'utf-8')
@@ -173,16 +209,16 @@ def parse_locus_data(data, format='basic'):
 def gpgll_as_dict(gpgll_str):
     """Returns the GPGLL as a dictionary and the checksum.
 
-         in: $GPGLL,3110.2908,N,12123.2348,E,041139.000,A,A*59
-        out: ({"message_id": GPGLL,
-               "latitude": 3110.2908,
-               "ns": "N",
-               "longitude": 12123.2348,
-               "ew": "E",
-               "utc": 041139.000,
-               "data_valid": "A",
-               "pos_mode": "A"},
-              59)
+        >>> gpgll_as_dict('$GPGLL,3110.2908,N,12123.2348,E,041139.000,A,A*59')
+        ({'message_id': GPGLL,
+          'latitude': 3110.2908,
+          'ns': 'N',
+          'longitude': 12123.2348,
+          'ew': 'E',
+          'utc': 041139.000,
+          'data_valid': 'A',
+          'pos_mode': 'A'},
+         59)
 
     """
     gpgll, checksum = gpgll_str[1:].split("*")  # remove `$` split *
@@ -207,19 +243,20 @@ def gpgll_as_dict(gpgll_str):
 def pmtklog_as_dict(pmtklog_str):
     """Returns the PMTKLOG as a dictionary and the checksum.
 
-         in: $PMTKLOG,456,0,11,31,2,0,0,0,3769,46*48
-        out: ({'message_id': 'PMTKLOG',
-               'serial': 456,
-               'type': 0,
-               'mode': 11,
-               'content': 31,
-               'interval': 2,
-               'distance': 0,
-               'speed': 0,
-               'status': 0,
-               'number': 3769,
-               'percent': 46},
-              48)
+        >>> pmtklog_as_dict('$PMTKLOG,456,0,11,31,2,0,0,0,3769,46*48')
+        ({'message_id': 'PMTKLOG',
+          'serial': 456,
+          'type': 0,
+          'mode': 11,
+          'content': 31,
+          'interval': 2,
+          'distance': 0,
+          'speed': 0,
+          'status': 0,
+          'number': 3769,
+          'percent': 46},
+         48)
+
     """
     pmtklog, checksum = pmtklog_str[1:].split('*')  # remove `$` split *
     message_id, serial, type, mode, content, interval, distance, speed,\
@@ -274,7 +311,7 @@ def hexstr2bytearray(s):
 
     becomes
 
-        bytearray(b'\xde\xad\xbe\xef')
+        bytearray(b'\\\\xde\\\\xad\\\\xbe\\\\xef')
 
     """
     # split the string into a list of strings, each two characters long
@@ -285,8 +322,8 @@ def hexstr2bytearray(s):
 
 
 def parse_float(bytes):
+    """Converts four bytes into a float."""
     longValue = parse_long(bytes)
-    # borrowed code from https://github.com/douggilliland/Dougs-Arduino-Stuff/blob/master/Host%20code/parseLOCUS/parseLOCUS.cpp
     exponent = ((longValue >> 23) & 0xff) # float
     exponent -= 127.0
     exponent = pow(2,exponent)
@@ -299,14 +336,16 @@ def parse_float(bytes):
 
 
 def parse_long(bytes):
-    if len(bytes) != 4:
-        print >> sys.stderr, "WARNING: expecting 4 bytes got %s" % bytes
-    number = ((0xFF & bytes[3]) << 24) | ((0xFF & bytes[2]) << 16) | ((0xFF & bytes[1]) << 8) | (0xFF & bytes[0])
-    return number
+    """Converts four bytes into a long integer."""
+    assert len(bytes) == 4
+    return ((0xFF & bytes[3]) << 24 |
+            (0xFF & bytes[2]) << 16 |
+            (0xFF & bytes[1]) << 8 |
+            (0xFF & bytes[0]))
 
 
 def parse_int(bytes):
-    if len(bytes) != 2:
-        print >> sys.stderr, "WARNING: expecting 2 bytes got %s" % bytes
-    number = ((0xFF & bytes[1]) << 8) | (0xFF & bytes[0])
+    """Converts two bytes into an interger."""
+    assert len(bytes) == 2
+    number = ((0xFF & bytes[1]) << 8 | (0xFF & bytes[0]))
     return number
