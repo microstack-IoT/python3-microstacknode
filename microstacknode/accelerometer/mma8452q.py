@@ -83,18 +83,19 @@ class MMA8452Q(object):
 
     http://www.freescale.com/files/sensors/doc/data_sheet/MMA8452Q.pdf
 
-    This chip uses an SMBus implementation which is not well supported on
-    the Raspberry Pi (at least, not in Python 3). We can write to registers
-    but reading requires sending multiple START signals. This somehow resets
-    the requested register address to 0x00. So we *can* read, but only from
-    register 0x00 and subsequent registers (using a multiple read). Luckily
-    the XYZ registers are in the first few and we can access them using a
-    multi-read.
-
-    Special thanks for John Nivard for providing a working class, which
-    this one is based off. I have made changes for consistency with other
-    Microstack modules.
     """
+    # This chip uses an SMBus implementation which is not well supported on
+    # the Raspberry Pi (at least, not in Python 3). We can write to registers
+    # but reading requires sending multiple START signals. This somehow resets
+    # the requested register address to 0x00. So we *can* read, but only from
+    # register 0x00 and subsequent registers (using a multiple read). Luckily
+    # the XYZ registers are in the first few and we can access them using a
+    # multi-read.
+
+    # Special thanks for John Nivard for providing a working class, which
+    # this one is based off. I have made changes for consistency with other
+    # Microstack modules.
+
     def __init__(self,
                  i2c_bus=DEFAULT_I2C_BUS,
                  i2c_address=DEFAULT_I2C_ADDRESS):
