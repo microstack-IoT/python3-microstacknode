@@ -28,7 +28,9 @@ setup(
     author_email='thomas.preston@openlx.org.uk',
     license='GPLv3+',
     url='https://github.com/microstack/microstacknode',
-    packages=['microstacknode'],
+    packages=['microstacknode',
+              'microstacknode.gps',
+              'microstacknode.accelerometer'],
     long_description=open('README.md').read() + open('CHANGELOG').read(),
     classifiers=[
         "License :: OSI Approved :: GNU Affero General Public License v3 or "
