@@ -1,9 +1,9 @@
 #!/bin/bash
 
 ## docs
-# cd docs/
-# make html
-# cd -
+cd docs/
+make html
+cd -
 
 python setup.py --command-packages=stdeb.command sdist_dsc
 
@@ -23,5 +23,12 @@ cp {../../dpkg-files,debian}/python3-microstacknode.install
 # cp {../../dpkg-files,debian}/python3-microstacknode.udev
 # cp ../../dpkg-files/post-installation.sh debian/python3-microstacknode.postinst
 # cp ../../bin/post-removal.sh debian/python3-microstacknode.postrm
+
+# examples
+ls ../../examples/ | while read example
+do
+    echo ../../examples/$example >> debian/python-microstacknode.examples
+    echo ../../examples/$example >> debian/python3-microstacknode.examples
+done
 
 dpkg-buildpackage -us -uc

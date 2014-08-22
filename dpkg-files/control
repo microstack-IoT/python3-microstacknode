@@ -3,13 +3,13 @@ Maintainer: Thomas Preston <thomas.preston@openlx.org.uk>
 Section: python
 Priority: optional
 Build-Depends: python-all (>= 2.6.6-3), debhelper (>= 7),
-               python3, python3-setuptools
+               python3 (>= 3.2.3), python3-setuptools
 Standards-Version: 3.9.1
 X-Python3-Version: >= 3.2
 
 Package: python-microstacknode
 Architecture: all
-Depends: ${misc:Depends}, ${python:Depends}
+Depends: ${misc:Depends}, ${python:Depends},
          python-microstackcommon (>= 0.0.0), python-microstackcommon (<< 1.0.0)
 Description: The Microstack node functions module.
  Python module for interacting with Microstack products.
@@ -17,7 +17,7 @@ Description: The Microstack node functions module.
 
 Package: python3-microstacknode
 Architecture: all
-Depends: ${misc:Depends}, ${python3:Depends}
+Depends: ${misc:Depends}, ${python3:Depends},
          python3-microstackcommon (>= 0.0.0), python3-microstackcommon (<< 1.0.0)
 Description: The Microstack node functions module.
  Python 3 module for interacting with Microstack products.
