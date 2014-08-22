@@ -13,11 +13,19 @@ L80 GPS
           GPS module is connected to. It only updates every second. It is
           normal for ``locus_query_data`` to take a long time to return.
 
-Basic GPS::
+.. todo:: Link to GPS command wiki describing what each of the GP*** do.
+
+Basic GPS (GPGLL is useful for location/time)::
 
     >>> import microstacknode.gps.l80gps
     >>> gps = microstacknode.gps.l80gps.L80GPS()  # creates a GPS object
-    >>> gps.gpgll  # print the latest GPGLL data (errors if poor reception)
+    >>> gps.gprmc  # print the latest GPRMC data (errors if poor reception)
+    >>> gps.gpvtg
+    >>> gps.gpgga
+    >>> gps.gpgsa
+    >>> gps.gpgsv
+    >>> gps.gpgll
+    >>> gps.gptxt
 
 LOCUS data logging::
 
@@ -27,6 +35,12 @@ LOCUS data logging::
     >>> gps.locus_erase()       # Erase all data items in the log
     >>> gps.locus_query_data()  # Return a list of data items in the logger
 
+Extra modes::
+
+    >>> gps.standby()
+    >>> gps.always_locate()
+    >>> gps.sleep()
+    >>> gps.set_periodic_normal()  # wakes from sleep or always locate off
 
 MMA8452 Accelerometer
 =====================

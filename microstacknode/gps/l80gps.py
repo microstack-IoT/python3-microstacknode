@@ -10,6 +10,11 @@ import datetime
 logging.basicConfig(level=logging.DEBUG)
 
 
+# Test these with `echo -e "\$PMTK161,0*28\r\n" > /dev/ttyAMA0`
+PMTK_STANDBY = '$PMTK161,0*28\r\n'
+PMTK_SET_PERIODIC_MODE_NORMAL = '$PMTK225,0*2B\r\n'
+PMTK_SET_PERIODIC_MODE_AUTO_LOCATE_STANDBY = '$PMTK225,8*23\r\n'
+PMTK_SET_PERIODIC_MODE_SLEEP = '$PMTK225,2,3000,12000,18000,72000*15\r\n'
 PMTK_LOCUS_QUERY_STATUS = '$PMTK183*38\r\n'
 PMTK_LOCUS_ERASE_FLASH = '$PMTK184,1*22\r\n'
 PMTK_LOCUS_STOP_LOGGER = '$PMTK185,1*23\r\n'
@@ -112,6 +117,44 @@ class L80GPS(object):
         pkt = self.get_nmea_pkt('GPTXT')
         gptxt_dict, checksum = gprmc_as_dict(pkt)
         return gptxt_dict
+
+    def check_pmtk_ack(self):
+        '''Waits for an validates a PMTK_ACK. Raises an exception if
+        PMTK_ACK reports error.
+        '''
+        pkt = self.get_nmea_pkt('$PMTK001')
+        ack_data = pkt.split('*').split(',')
+        flag = int(ack_data[2])
+        if flag == 0:
+            raise PMTKACKError('Invalid packet')
+        elif flag == 1:
+            raise PMTKACKError('Unsupported packet type')
+        elif flag == 2:
+            raise PMTKACKError('Valid packet but action failed')
+        elif flag == 3:
+            return  # success!
+        else:
+            raise PMTKACKError('Unknown flag in ack.')
+
+    def standby(self):
+        '''Puts the GPS into standby mode.'''
+        self.send_nmea_pkt(PMTK_STANDBY)
+        self.check_pmtk_ack()
+
+    def always_locate(self):
+        '''Turns on AlwaysLocate(TM). Turn off with `set_periodic_normal`.'''
+        self.send_nmea_pkt(PMTK_SET_PERIODIC_MODE_AUTO_LOCATE_STANDBY)
+        self.check_pmtk_ack()
+
+    def sleep(self):
+        '''Puts the GPS into sleep mode. Wake with `set_periodic_normal`.'''
+        self.send_nmea_pkt(PMTK_SET_PERIODIC_MODE_SLEEP)
+        self.check_pmtk_ack()
+
+    def set_periodic_normal(self):
+        '''Sets the periodic mode to normal.'''
+        self.send_nmea_pkt(PMTK_SET_PERIODIC_MODE_NORMAL)
+        self.check_pmtk_ack()
 
     def locus_query(self):
         """Returns the status of the locus logger."""
@@ -258,102 +301,143 @@ def parse_locus_data(data, format='basic'):
 
 
 def gprmc_as_dict(pkt):
-"""
-GPRMC Message ID
-UTC time Time in format ‘hhmmss.sss’
-Data valid
-‘V’ =Invalid
-‘A’ = Valid
-Latitude Latitude in format ‘ddmm.mmmm’ (degree and minutes)
-N/S
-‘N’ = North
-‘S’ = South
-Longitude Longitude in format ‘dddmm.mmmm’ (degree and minutes)
-E/W
-‘E’ = East
-‘W’ = West
-Speed Speed over ground in knots
-COG Course over ground in degree
-Date Date in format ‘ddmmyyyy’
-Magnetic variation Magnetic variation in degree, not being output
-E/W Magnetic variation E/W indicator, not being output
-Positioning mode
-‘N’ = No fix
-‘A’ = Autonomous GNSS fix
-‘D’ = Differential GNSS fix
-"""
+    """Returns the GPRMC as a dictionary and the checksum.
 
-def gpvtg_as_dict(self):
-"""
-GPVTG Message ID
-COG(T) Course over ground (true) in degree
-T Fixed field, true
-COG(M) Course over ground (magnetic), not being output
-M Fixed field, magnetic
-Speed Speed over ground in knots
-N Fixed field, knots
-Speed Speed over ground in km/h
-k Fixed field, km/h
-Positionin
-"""
+        >>> gprmc_as_dict('$GPRMC,013732.000,A,3150.7238,N,11711.7278,E,0.00,0.00,220413,,,A*68')
+        ({'message_id': 'GPRMC',
+          'utc': 0.0,
+          'data_valid': 'A',
+          'latitude': 3150.7238,
+          'ns': 0.0,
+          'longitude': 0.1,
+          'ew': 'A',
+          'speed':,
+          'cog':,
+          'date':,
+          'mag_var':,
+          'eq':,
+          'pos_mode':},
+          0C)
+    """
+    gprmc, checksum = gprmc_str.split('*')
+    message_id, utc, data_valid, latitude, ns, longitude, ew, speed, cog, \
+        date, mag_var, eq, pos_mode = gprmc.split(',')
+    utc = 0.0 is utc == '' else utc
+    latitude = 0.0 is latitude == '' else latitude
+    longitude = 0.0 is longitude == '' else longitude
+    gprmc_dict = {'message_id': message_id,
+                  'utc': float(utc),
+                  'data_valid': data_valid,
+                  'latitude': float(latitude),
+                  'ns': ns,
+                  'longitude': float(longitude),
+                  'ew': ew,
+                  'speed': speed,
+                  'cog': cog,
+                  'date': date,
+                  'mag_var': mag_var,
+                  'eq': eq,
+                  'pos_mode': pos_mode}
+    return (gprmc_dict, checksum)
 
-def gpgga_as_dict(self):
-"""
-UTC time Time in format ‘hhmmss.sss’
-Data valid
-‘V’ =Invalid
-‘A’ = Valid
-Latitude Latitude in format ‘ddmm.mmmm’ (degree and minutes)
-N/S
-‘N’ = North
-‘S’ = South
-Longitude Longitude in format ‘dddmm.mmmm’ (degree and minutes)
-E/W
-‘E’ = East
-‘W’ = West
-Fix status
-‘0’ =Invalid
-‘1’ = GNSS fix
-‘2’ = DGPS fix
-Number of SV Number of satellites being used (0 ~ 12)
-HDOP Horizontal Dilution Of Precision
-Altitude Altitude in meters according to WGS84 ellipsoid
-M Fixed field, meter
-GeoID separation Height of GeoID (mean sea level) above WGS84 ellipsoid, meter
-M Fixed field, meter
-DGPS age Age of DGPS data in seconds, empty if DGPS is not used
-DGPS station ID DGPS station ID, empty if DGPS is not used
-"""
+def gpvtg_as_dict(gpvtg_str):
+    """Returns the GPVTG as a dictionary and the checksum.
+
+        >>> gpvtg_as_dict('$GPVTG,0.0,T,,M,0.0,N,0.1,K,A*0C')
+        ({'message_id': 'GPVTG',
+          'cogt': 0.0,
+          't': 'A',
+          'cogm': '',
+          'speedn': 0.0,
+          'speedk': 0.1,
+          'pos_mode': 'A'},
+          0C)
+    """
+    gpvtg, checksum = gpvtg_str.split('*')
+    message_id, cogt, t, cogm, m, speedn, n, speedk, k, pos_mode = \
+        gpvtg.split(',')
+    gpvtg_dict = {'message_id': message_id,
+                  'cogt': cogt,
+                  'cogm': cogm,
+                  'speedn': float(speedn),
+                  'speedk': float(speedk),
+                  'pos_mode': pos_mode}
+    return (gpvtg_dict, checksum)
+
+def gpgga_as_dict(gpgga_str):
+    """Returns the GPGGA as a dictionary and the checksum.
+
+        >>> gpgga_as_dict('$GPGGA,015540.000,A,3150.68378,N,11711.93139,E,1,17,0.6,0051.6,M,0.0,M,,*58')
+        ({'message_id': 'GPGGA',
+          'utc': 015540.000,
+          'data_valid': 'A',
+          'latitude': 3150.68378,
+          'ns': 'N',
+          'longitude': 11711.93139,
+          'ew': 'E',
+          'fix': 1,
+          'number_of_sv': 17,
+          'hdop': 0.6,
+          'altitude': 0051.6,
+          'geoid_seperation': 0.0,
+          'dgps_age': '',
+          'dgps_station_id': ''},
+          77)
+    """
+    gpgga, checksum = gpgga_str.split('*')
+    message_id, utc, data_valid, latitude, ns, longitude, ew, fix, \
+        number_of_sv, hdop, altitude, m, geoid_seperation, m, dgps_age, \
+        dgps_station_id = gpgga.split(',')
+    utc = 0.0 if utc == '' else utc
+    latitude = 0.0 if latitude == '' else latitude
+    longitude = 0.0 if longitude == '' else longitude
+    gpgga_dict = {'message_id': message_id,
+                  'utc': float(utc),
+                  'data_valid': data_valid,
+                  'latitude': float(latitude),
+                  'ns': ns,
+                  'longitude': float(longitude),
+                  'ew': ew,
+                  'fix': fix,
+                  'number_of_sv': number_of_sv,
+                  'hdop': hdop,
+                  'altitude': altitude,
+                  'geoid_seperation': geoid_seperation,
+                  'dgps_age': dgps_age,
+                  'dgps_station_id': dgps_station_id}
+    return (gpgga_dict, checksum)
 
 
-def gpgsa_as_dict(self):
-"""
-Mode
-Auto selection of 2D or 3D fix
-‘M’ = Manual, forced to switch 2D/3D mode
-‘A’ = Allowed to automatically switch 2D/3D mode
-Fix status
-‘1’ = No fix
-‘2’ = 2D fix
-‘3’ = 3D fix
-Satellite used 1 Satellite used on channel 1
-Satellite used 2 Satellite used on channel 2
-Satellite used 3 Satellite used on channel 3
-Satellite used 4 Satellite used on channel 4
-Satellite used 5 Satellite used on channel 5
-Satellite used 6 Satellite used on channel 6
-Satellite used 7 Satellite used on channel 7
-Satellite used 8 Satellite used on channel 8
-Satellite used 9 Satellite used on channel 9
-Satellite used 10 Satellite used on channel 10
-Satellite used 11 Satellite used on channel 11
-Satellite used 12 Satellite used on channel 12
-PDOP Position Dilution Of Precision
-HDOP Horizontal Dilution Of Precision
-VDOP Vertical Dilution Of Precision
-"""
+def gpgsa_as_dict(gpgsa_str):
+    """Returns the GPGSA as a dictionary and the checksum.
 
-def gpgsv_as_dict(self):
+        >>> gpgsa_as_dict('$GPGSA,A,3,14,06,16,31,23,,,,,,,,1.66,1.42,0.84*0F')
+        ({'message_id': 'GPGSA',
+          'mode': 'A',
+          'fix': 3,
+          'satellites_on_channel': [14, 06, 16, 31, 23, 0, 0, 0, 0, 0, 0, 0],
+          'pdop': 1.66,
+          'hdop': 1.42,
+          'vdop': 0.84},
+          77)
+    """
+    gpgsa, checksum = gpgsa_str[1:].split("*")  # remove `$` split *
+    gpgsa_data = gpgsa.split(',')
+    message_id, mode, fix = gpgsa_data[:3]
+    satellites_on_ch = gpgsa_data[3:-3]
+    pdop, hdop, vdop = gpgsa_data[-3:]
+    # set all blank channels to 0
+    satellites_on_ch = map(lambda s: 0 if s == '' else s, satellites_on_ch)
+    gpgsa_dict = {'message_id': message_id,
+                  'mode': mode,
+                  'fix': fix,
+                  'satellites_on_channel': satellites_on_ch,
+                  'pdop': pdop,
+                  'hdop': hdop,
+                  'vdop': vdop}
+    return (gpgsa_dict, checksum)
+
+def gpgsv_as_dict(gpgsv_str):
     """Returns the GPGSV as a dictionary and the checksum.
 
         >>> gpgsv_as_dict('$GPGSV,3,1,12,01,05,060,18,02,17,259,43,04,56,287,28,09,08,277,28*77')
@@ -361,22 +445,22 @@ def gpgsv_as_dict(self):
           'num_messages': 3,
           'sequence_num': 1,
           'satellites_in_view': 12,
-          'satellite_1_id': 01,
-          'satellite_1_elevation': 05,
-          'satellite_1_azimuth': 060,
-          'satellite_1_snr': 18,
-          'satellite_2_id': 02,
-          'satellite_2_elevation':17,
-          'satellite_2_azimuth':259,
-          'satellite_2_snr':43,
-          'satellite_3_id':04,
-          'satellite_3_elevation':56,
-          'satellite_3_azimuth':287,
-          'satellite_3_snr':28,
-          'satellite_4_id':09,
-          'satellite_4_elevation':08,
-          'satellite_4_azimuth':277,
-          'satellite_4_snr': 28},
+          'satellite': [{'id': 01,
+                         'elevation': 05,
+                         'azimuth': 060,
+                         'snr': 18},
+                        {'id': 02,
+                         'elevation': 17,
+                         'azimuth': 259,
+                         'snr': 43},
+                        {'id': 04,
+                         'elevation': 56,
+                         'azimuth': 287,
+                         'snr': 28},
+                        {'id': 09,
+                         'elevation': 08,
+                         'azimuth': 277,
+                         'snr': 28}]},
           77)
     """
     gpgsv, checksum = gpgsv_str[1:].split("*")  # remove `$` split *
@@ -387,29 +471,26 @@ def gpgsv_as_dict(self):
         satellite_3_elevation, satellite_3_azimuth, satellite_3_snr, \
         satellite_4_id, satellite_4_elevation, satellite_4_azimuth, \
         satellite_4_snr = gpgsv.split(",")
-    latitude = 0.0 if latitude == '' else latitude
-    longitude = 0.0 if longitude == '' else longitude
-    utc = 0.0 if utc == '' else utc
     gpgsv_dict = {'message_id': message_id,
                   'num_messages': num_messages,
                   'sequence_num': sequence_num,
                   'satellites_in_view': satellites_in_view,
-                  'satellite_1_id': satellite_1_id,
-                  'satellite_1_elevation': satellite_1_elevation,
-                  'satellite_1_azimuth': satellite_1_azimuth,
-                  'satellite_1_snr': satellite_1_snr,
-                  'satellite_2_id': satellite_2_id,
-                  'satellite_2_elevation':satellite_2_elevation,
-                  'satellite_2_azimuth':satellite_2_azimuth,
-                  'satellite_2_snr':satellite_2_snr,
-                  'satellite_3_id':satellite_3_id,
-                  'satellite_3_elevation':satellite_3_elevation,
-                  'satellite_3_azimuth':satellite_3_azimuth,
-                  'satellite_3_snr':satellite_3_snr,
-                  'satellite_4_id':satellite_4_id,
-                  'satellite_4_elevation':satellite_4_elevation,
-                  'satellite_4_azimuth':satellite_4_azimuth,
-                  'satellite_4_snr': satellite_4_snr}
+                  'satellite': [{'id': satellite_1_id,
+                                 'elevation': satellite_1_elevation,
+                                 'azimuth': satellite_1_azimuth,
+                                 'snr': satellite_1_snr},
+                                {'id': satellite_2_id,
+                                 'elevation': satellite_2_elevation,
+                                 'azimuth': satellite_2_azimuth,
+                                 'snr': satellite_2_snr},
+                                {'id': satellite_3_id,
+                                 'elevation': satellite_3_elevation,
+                                 'azimuth': satellite_3_azimuth,
+                                 'snr': satellite_3_snr},
+                                {'id': satellite_4_id,
+                                 'elevation': satellite_4_elevation,
+                                 'azimuth': satellite_4_azimuth,
+                                 'snr': satellite_4_snr}]}
     return (gpgsv_dict, checksum)
 
 
