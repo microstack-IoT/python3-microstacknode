@@ -322,15 +322,17 @@ def gprmc_as_dict(pkt):
     gprmc, checksum = gprmc_str.split('*')
     message_id, utc, data_valid, latitude, ns, longitude, ew, speed, cog, \
         date, mag_var, eq, pos_mode = gprmc.split(',')
-    utc = 0.0 is utc == '' else utc
-    latitude = 0.0 is latitude == '' else latitude
-    longitude = 0.0 is longitude == '' else longitude
+    utc = 0.0 if utc == '' else utc
+    latitude = 0.0 if latitude == '' else latitude
+    longitude = 0.0 if longitude == '' else longitude
     gprmc_dict = {'message_id': message_id,
                   'utc': float(utc),
                   'data_valid': data_valid,
-                  'latitude': float(latitude),
+                  'latitude': degrees_and_minutes_to_degrees(float(latitude),
+                                                             ns),
                   'ns': ns,
-                  'longitude': float(longitude),
+                  'longitude': degrees_and_minutes_to_degrees(float(longitude),
+                                                              ew),
                   'ew': ew,
                   'speed': speed,
                   'cog': cog,
@@ -367,6 +369,8 @@ def gpvtg_as_dict(gpvtg_str):
 def gpgga_as_dict(gpgga_str):
     """Returns the GPGGA as a dictionary and the checksum.
 
+    Returns latitude and longitude as degrees.
+
         >>> gpgga_as_dict('$GPGGA,015540.000,A,3150.68378,N,11711.93139,E,1,17,0.6,0051.6,M,0.0,M,,*58')
         ({'message_id': 'GPGGA',
           'utc': 015540.000,
@@ -394,9 +398,11 @@ def gpgga_as_dict(gpgga_str):
     gpgga_dict = {'message_id': message_id,
                   'utc': float(utc),
                   'data_valid': data_valid,
-                  'latitude': float(latitude),
+                  'latitude': degrees_and_minutes_to_degrees(float(latitude),
+                                                             ns),
                   'ns': ns,
-                  'longitude': float(longitude),
+                  'longitude': degrees_and_minutes_to_degrees(float(longitude),
+                                                              ew),
                   'ew': ew,
                   'fix': fix,
                   'number_of_sv': number_of_sv,
@@ -516,9 +522,11 @@ def gpgll_as_dict(gpgll_str):
     longitude = 0.0 if longitude == '' else longitude
     utc = 0.0 if utc == '' else utc
     gpgll_dict = ({"message_id": message_id,
-                   "latitude": float(latitude),
+                   "latitude": degrees_and_minutes_to_degrees(float(latitude),
+                                                              ns),
                    "ns": ns,
-                   "longitude": float(longitude),
+                   "longitude": degrees_and_minutes_to_degrees(float(longitude),
+                                                               ew),
                    "ew": ew,
                    "utc": float(utc),
                    "data_valid": data_valid,
@@ -529,18 +537,18 @@ def gpgll_as_dict(gpgll_str):
 
 
 def gptxt_as_dict(self):
-"""
-GPTXT Message ID
-XX Total number of messages in this transmission. (01~99)
-YY Message number in this transmission. (01~99)
-ZZ
-Severity of the message
-‘00’= ERROR
-‘01’= WARNING
-‘02’= NOTICE
-‘07’= USER
-Text messasage
-"""
+    """
+    GPTXT Message ID
+    XX Total number of messages in this transmission. (01~99)
+    YY Message number in this transmission. (01~99)
+    ZZ
+    Severity of the message
+    ‘00’= ERROR
+    ‘01’= WARNING
+    ‘02’= NOTICE
+    ‘07’= USER
+    Text messasage
+    """
     pass
 
 
@@ -653,3 +661,16 @@ def parse_int(bytes):
     assert len(bytes) == 2
     number = ((0xFF & bytes[1]) << 8 | (0xFF & bytes[0]))
     return number
+
+
+def degrees_and_minutes_to_degrees(degrees_and_minutes, direction):
+    """Converts dddmm.mmmm to ddd.dddd...
+    direction's 's' and 'w' are negative.
+    """
+    degrees = int(degrees_and_minutes / 100)
+    minutes = degrees_and_minutes % 100
+    degrees += (minutes / 60)
+    if direction.lower() == 's' or direction.lower() == 'w':
+        return -1 * degrees
+    else:
+        return degrees
