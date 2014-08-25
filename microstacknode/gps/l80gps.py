@@ -73,29 +73,23 @@ class L80GPS(object):
 
     @property
     def gpgga(self):
-        """Returns the latest GPGGA message.
-
-        :rasies: DataInvalidError
-        """
+        """Returns the latest GPGGA message."""
         pkt = self.get_nmea_pkt('GPGGA')
-        gpgga_dict, checksum = gprmc_as_dict(pkt)
-        if gpgga_dict['data_valid'] == "A":
-            return gpgga_dict
-        else:
-            raise DataInvalidError("Indicated by data_valid field.")
+        gpgga_dict, checksum = gpgga_as_dict(pkt)
+        return gpgga_dict
 
     @property
     def gpgsa(self):
         """Returns the latest GPGSA message."""
         pkt = self.get_nmea_pkt('GPGSA')
-        gpgsa_dict, checksum = gprmc_as_dict(pkt)
+        gpgsa_dict, checksum = gpgsa_as_dict(pkt)
         return gpgsa_dict
 
     @property
     def gpgsv(self):
         """Returns the latest GPGSV message."""
         pkt = self.get_nmea_pkt('GPGSV')
-        gpgsv_dict, checksum = gprmc_as_dict(pkt)
+        gpgsv_dict, checksum = gpgsv_as_dict(pkt)
         return gpgsv_dict
 
     @property
@@ -115,7 +109,7 @@ class L80GPS(object):
     def gptxt(self):
         """Returns the latest GPTXT message."""
         pkt = self.get_nmea_pkt('GPTXT')
-        gptxt_dict, checksum = gprmc_as_dict(pkt)
+        gptxt_dict, checksum = gptxt_as_dict(pkt)
         return gptxt_dict
 
     def check_pmtk_ack(self):
@@ -300,7 +294,7 @@ def parse_locus_data(data, format='basic'):
                      'checksum': checksum})
 
 
-def gprmc_as_dict(pkt):
+def gprmc_as_dict(gprmc_str):
     """Returns the GPRMC as a dictionary and the checksum.
 
         >>> gprmc_as_dict('$GPRMC,013732.000,A,3150.7238,N,11711.7278,E,0.00,0.00,220413,,,A*68')
@@ -374,7 +368,6 @@ def gpgga_as_dict(gpgga_str):
         >>> gpgga_as_dict('$GPGGA,015540.000,A,3150.68378,N,11711.93139,E,1,17,0.6,0051.6,M,0.0,M,,*58')
         ({'message_id': 'GPGGA',
           'utc': 015540.000,
-          'data_valid': 'A',
           'latitude': 3150.68378,
           'ns': 'N',
           'longitude': 11711.93139,
@@ -389,7 +382,8 @@ def gpgga_as_dict(gpgga_str):
           77)
     """
     gpgga, checksum = gpgga_str.split('*')
-    message_id, utc, data_valid, latitude, ns, longitude, ew, fix, \
+    print(gpgga_str)
+    message_id, utc, latitude, ns, longitude, ew, fix, \
         number_of_sv, hdop, altitude, m, geoid_seperation, m, dgps_age, \
         dgps_station_id = gpgga.split(',')
     utc = 0.0 if utc == '' else utc
@@ -397,7 +391,6 @@ def gpgga_as_dict(gpgga_str):
     longitude = 0.0 if longitude == '' else longitude
     gpgga_dict = {'message_id': message_id,
                   'utc': float(utc),
-                  'data_valid': data_valid,
                   'latitude': degrees_and_minutes_to_degrees(float(latitude),
                                                              ns),
                   'ns': ns,
@@ -469,6 +462,7 @@ def gpgsv_as_dict(gpgsv_str):
                          'snr': 28}]},
           77)
     """
+    # TODO varaible length string depending on number of satellites
     gpgsv, checksum = gpgsv_str[1:].split("*")  # remove `$` split *
     message_id, num_messages, sequence_num, satellites_in_view, \
         satellite_1_id, satellite_1_elevation, satellite_1_azimuth, \
@@ -549,6 +543,7 @@ def gptxt_as_dict(self):
     ‘07’= USER
     Text messasage
     """
+    # TODO fix this
     pass
 
 

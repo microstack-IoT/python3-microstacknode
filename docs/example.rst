@@ -27,7 +27,19 @@ Basic GPS (GPGLL is useful for location/time)::
     >>> gps.gpgll
     >>> gps.gptxt
 
-LOCUS data logging::
+Extra modes::
+
+    >>> gps.standby()
+    >>> gps.always_locate()
+    >>> gps.sleep()
+    >>> gps.set_periodic_normal()  # wakes from sleep or always locate off
+
+
+LOCUS Data Logging
+------------------
+The GPS unit can log data to its internal memory without anything
+driving it using the LOCUS logging system. The following commands
+interface with LOCUS::
 
     >>> gps.locus_query()       # Query the status of the LOCUS logger
     >>> gps.locus_start()       # Start the logger
@@ -35,12 +47,20 @@ LOCUS data logging::
     >>> gps.locus_erase()       # Erase all data items in the log
     >>> gps.locus_query_data()  # Return a list of data items in the logger
 
-Extra modes::
+For example, you could issue the following command::
 
-    >>> gps.standby()
-    >>> gps.always_locate()
-    >>> gps.sleep()
-    >>> gps.set_periodic_normal()  # wakes from sleep or always locate off
+    >>> gps.locus_start()
+
+Shutdown/halt the device running Python, go for a walk, reboot, start
+Python and then run the following command and receive GPS data for the
+walk::
+
+    >>> gps.locus_query_data()
+
+The logger will continue to log GPS data until it runs out of memory, at
+which point it will stop. Manually stop the LOCUS logger with::
+
+    >>> gps.locus_stop()
 
 MMA8452 Accelerometer
 =====================
