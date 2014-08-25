@@ -73,29 +73,23 @@ class L80GPS(object):
 
     @property
     def gpgga(self):
-        """Returns the latest GPGGA message.
-
-        :rasies: DataInvalidError
-        """
+        """Returns the latest GPGGA message."""
         pkt = self.get_nmea_pkt('GPGGA')
-        gpgga_dict, checksum = gprmc_as_dict(pkt)
-        if gpgga_dict['data_valid'] == "A":
-            return gpgga_dict
-        else:
-            raise DataInvalidError("Indicated by data_valid field.")
+        gpgga_dict, checksum = gpgga_as_dict(pkt)
+        return gpgga_dict
 
     @property
     def gpgsa(self):
         """Returns the latest GPGSA message."""
         pkt = self.get_nmea_pkt('GPGSA')
-        gpgsa_dict, checksum = gprmc_as_dict(pkt)
+        gpgsa_dict, checksum = gpgsa_as_dict(pkt)
         return gpgsa_dict
 
     @property
     def gpgsv(self):
         """Returns the latest GPGSV message."""
         pkt = self.get_nmea_pkt('GPGSV')
-        gpgsv_dict, checksum = gprmc_as_dict(pkt)
+        gpgsv_dict, checksum = gpgsv_as_dict(pkt)
         return gpgsv_dict
 
     @property
@@ -115,7 +109,7 @@ class L80GPS(object):
     def gptxt(self):
         """Returns the latest GPTXT message."""
         pkt = self.get_nmea_pkt('GPTXT')
-        gptxt_dict, checksum = gprmc_as_dict(pkt)
+        gptxt_dict, checksum = gptxt_as_dict(pkt)
         return gptxt_dict
 
     def check_pmtk_ack(self):
@@ -300,7 +294,7 @@ def parse_locus_data(data, format='basic'):
                      'checksum': checksum})
 
 
-def gprmc_as_dict(pkt):
+def gprmc_as_dict(gprmc_str):
     """Returns the GPRMC as a dictionary and the checksum.
 
         >>> gprmc_as_dict('$GPRMC,013732.000,A,3150.7238,N,11711.7278,E,0.00,0.00,220413,,,A*68')
@@ -322,15 +316,17 @@ def gprmc_as_dict(pkt):
     gprmc, checksum = gprmc_str.split('*')
     message_id, utc, data_valid, latitude, ns, longitude, ew, speed, cog, \
         date, mag_var, eq, pos_mode = gprmc.split(',')
-    utc = 0.0 is utc == '' else utc
-    latitude = 0.0 is latitude == '' else latitude
-    longitude = 0.0 is longitude == '' else longitude
+    utc = 0.0 if utc == '' else utc
+    latitude = 0.0 if latitude == '' else latitude
+    longitude = 0.0 if longitude == '' else longitude
     gprmc_dict = {'message_id': message_id,
                   'utc': float(utc),
                   'data_valid': data_valid,
-                  'latitude': float(latitude),
+                  'latitude': degrees_and_minutes_to_degrees(float(latitude),
+                                                             ns),
                   'ns': ns,
-                  'longitude': float(longitude),
+                  'longitude': degrees_and_minutes_to_degrees(float(longitude),
+                                                              ew),
                   'ew': ew,
                   'speed': speed,
                   'cog': cog,
@@ -367,10 +363,11 @@ def gpvtg_as_dict(gpvtg_str):
 def gpgga_as_dict(gpgga_str):
     """Returns the GPGGA as a dictionary and the checksum.
 
+    Returns latitude and longitude as degrees.
+
         >>> gpgga_as_dict('$GPGGA,015540.000,A,3150.68378,N,11711.93139,E,1,17,0.6,0051.6,M,0.0,M,,*58')
         ({'message_id': 'GPGGA',
           'utc': 015540.000,
-          'data_valid': 'A',
           'latitude': 3150.68378,
           'ns': 'N',
           'longitude': 11711.93139,
@@ -385,7 +382,8 @@ def gpgga_as_dict(gpgga_str):
           77)
     """
     gpgga, checksum = gpgga_str.split('*')
-    message_id, utc, data_valid, latitude, ns, longitude, ew, fix, \
+    print(gpgga_str)
+    message_id, utc, latitude, ns, longitude, ew, fix, \
         number_of_sv, hdop, altitude, m, geoid_seperation, m, dgps_age, \
         dgps_station_id = gpgga.split(',')
     utc = 0.0 if utc == '' else utc
@@ -393,10 +391,11 @@ def gpgga_as_dict(gpgga_str):
     longitude = 0.0 if longitude == '' else longitude
     gpgga_dict = {'message_id': message_id,
                   'utc': float(utc),
-                  'data_valid': data_valid,
-                  'latitude': float(latitude),
+                  'latitude': degrees_and_minutes_to_degrees(float(latitude),
+                                                             ns),
                   'ns': ns,
-                  'longitude': float(longitude),
+                  'longitude': degrees_and_minutes_to_degrees(float(longitude),
+                                                              ew),
                   'ew': ew,
                   'fix': fix,
                   'number_of_sv': number_of_sv,
@@ -463,6 +462,7 @@ def gpgsv_as_dict(gpgsv_str):
                          'snr': 28}]},
           77)
     """
+    # TODO varaible length string depending on number of satellites
     gpgsv, checksum = gpgsv_str[1:].split("*")  # remove `$` split *
     message_id, num_messages, sequence_num, satellites_in_view, \
         satellite_1_id, satellite_1_elevation, satellite_1_azimuth, \
@@ -516,9 +516,11 @@ def gpgll_as_dict(gpgll_str):
     longitude = 0.0 if longitude == '' else longitude
     utc = 0.0 if utc == '' else utc
     gpgll_dict = ({"message_id": message_id,
-                   "latitude": float(latitude),
+                   "latitude": degrees_and_minutes_to_degrees(float(latitude),
+                                                              ns),
                    "ns": ns,
-                   "longitude": float(longitude),
+                   "longitude": degrees_and_minutes_to_degrees(float(longitude),
+                                                               ew),
                    "ew": ew,
                    "utc": float(utc),
                    "data_valid": data_valid,
@@ -529,18 +531,19 @@ def gpgll_as_dict(gpgll_str):
 
 
 def gptxt_as_dict(self):
-"""
-GPTXT Message ID
-XX Total number of messages in this transmission. (01~99)
-YY Message number in this transmission. (01~99)
-ZZ
-Severity of the message
-‘00’= ERROR
-‘01’= WARNING
-‘02’= NOTICE
-‘07’= USER
-Text messasage
-"""
+    """
+    GPTXT Message ID
+    XX Total number of messages in this transmission. (01~99)
+    YY Message number in this transmission. (01~99)
+    ZZ
+    Severity of the message
+    ‘00’= ERROR
+    ‘01’= WARNING
+    ‘02’= NOTICE
+    ‘07’= USER
+    Text messasage
+    """
+    # TODO fix this
     pass
 
 
@@ -653,3 +656,16 @@ def parse_int(bytes):
     assert len(bytes) == 2
     number = ((0xFF & bytes[1]) << 8 | (0xFF & bytes[0]))
     return number
+
+
+def degrees_and_minutes_to_degrees(degrees_and_minutes, direction):
+    """Converts dddmm.mmmm to ddd.dddd...
+    direction's 's' and 'w' are negative.
+    """
+    degrees = int(degrees_and_minutes / 100)
+    minutes = degrees_and_minutes % 100
+    degrees += (minutes / 60)
+    if direction.lower() == 's' or direction.lower() == 'w':
+        return -1 * degrees
+    else:
+        return degrees
