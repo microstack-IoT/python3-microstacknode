@@ -1,0 +1,453 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>L80GPS GPS Module Reference &mdash; Microstack Node 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Microstack Node 0.1.0 documentation" href="index.html" />
+    <link rel="next" title="MMA8452Q Accelerometer Reference" href="mma8452q_reference.html" />
+    <link rel="prev" title="Examples" href="example.html" /> 
+  </head>
+  <body>
+      <div class="header"><h1 class="heading"><a href="index.html">
+          <span>Microstack Node 0.1.0 documentation</span></a></h1>
+        <h2 class="heading"><span>L80GPS GPS Module Reference</span></h2>
+      </div>
+      <div class="topnav">
+      
+        <p>
+        «&#160;&#160;<a href="example.html">Examples</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="mma8452q_reference.html">MMA8452Q Accelerometer Reference</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="module-microstacknode.gps.l80gps">
+<span id="l80gps-gps-module-reference"></span><h1>L80GPS GPS Module Reference<a class="headerlink" href="#module-microstacknode.gps.l80gps" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="microstacknode.gps.l80gps.L80GPS">
+<em class="property">class </em><tt class="descclassname">microstacknode.gps.l80gps.</tt><tt class="descname">L80GPS</tt><big>(</big><em>device='/dev/ttyAMA0'</em><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.L80GPS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thread that reads a stream of L80 GPS protocol lines and stores the
+information. Methods may raise exceptions if data is invalid (usually
+becasue of a poor GPS reception - try moving the GPS module outside).</p>
+<dl class="method">
+<dt id="microstacknode.gps.l80gps.L80GPS.always_locate">
+<tt class="descname">always_locate</tt><big>(</big><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.L80GPS.always_locate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Turns on AlwaysLocate(TM). Turn off with <cite>set_periodic_normal</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="microstacknode.gps.l80gps.L80GPS.check_pmtk_ack">
+<tt class="descname">check_pmtk_ack</tt><big>(</big><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.L80GPS.check_pmtk_ack" title="Permalink to this definition">¶</a></dt>
+<dd><p>Waits for an validates a PMTK_ACK. Raises an exception if
+PMTK_ACK reports error.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="microstacknode.gps.l80gps.L80GPS.get_nmea_pkt">
+<tt class="descname">get_nmea_pkt</tt><big>(</big><em>pattern</em><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.L80GPS.get_nmea_pkt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the next valid NMEA string which contains the pattern
+provided. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">gps</span><span class="o">.</span><span class="n">get_nmea_pkt</span><span class="p">(</span><span class="s">&#39;GPRMC&#39;</span><span class="p">)</span>
+<span class="go">&#39;$GPRMC,013732.000,A,3150.7238,N,11711.7278,E,0.00,0.00,220413,,,A*68&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="microstacknode.gps.l80gps.L80GPS.gpgga">
+<tt class="descname">gpgga</tt><a class="headerlink" href="#microstacknode.gps.l80gps.L80GPS.gpgga" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the latest GPGGA message.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="microstacknode.gps.l80gps.L80GPS.gpgll">
+<tt class="descname">gpgll</tt><a class="headerlink" href="#microstacknode.gps.l80gps.L80GPS.gpgll" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the latest GPGLL message.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Rasies:</th><td class="field-body">DataInvalidError</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="microstacknode.gps.l80gps.L80GPS.gpgsa">
+<tt class="descname">gpgsa</tt><a class="headerlink" href="#microstacknode.gps.l80gps.L80GPS.gpgsa" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the latest GPGSA message.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="microstacknode.gps.l80gps.L80GPS.gpgsv">
+<tt class="descname">gpgsv</tt><a class="headerlink" href="#microstacknode.gps.l80gps.L80GPS.gpgsv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the latest GPGSV message.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="microstacknode.gps.l80gps.L80GPS.gprmc">
+<tt class="descname">gprmc</tt><a class="headerlink" href="#microstacknode.gps.l80gps.L80GPS.gprmc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the latest GPRMC message.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Rasies:</th><td class="field-body">DataInvalidError</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="microstacknode.gps.l80gps.L80GPS.gptxt">
+<tt class="descname">gptxt</tt><a class="headerlink" href="#microstacknode.gps.l80gps.L80GPS.gptxt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the latest GPTXT message.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="microstacknode.gps.l80gps.L80GPS.gpvtg">
+<tt class="descname">gpvtg</tt><a class="headerlink" href="#microstacknode.gps.l80gps.L80GPS.gpvtg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the latest GPVTG message.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="microstacknode.gps.l80gps.L80GPS.locus_erase">
+<tt class="descname">locus_erase</tt><big>(</big><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.L80GPS.locus_erase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Erases the internal log.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="microstacknode.gps.l80gps.L80GPS.locus_query">
+<tt class="descname">locus_query</tt><big>(</big><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.L80GPS.locus_query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the status of the locus logger.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="microstacknode.gps.l80gps.L80GPS.locus_query_data">
+<tt class="descname">locus_query_data</tt><big>(</big><em>raw=False</em>, <em>num_attempts=5</em><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.L80GPS.locus_query_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of parsed LOCUS log data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>raw</strong> (<em>boolean</em>) &#8211; Return raw bytearray instead of list of dict&#8217;s.</li>
+<li><strong>num_attempts</strong> (<em>int</em>) &#8211; Number of attempts to get raw data (it sometimes
+fails)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Rasies:</th><td class="field-body"><p class="first last">LOCUSQueryDataError</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="microstacknode.gps.l80gps.L80GPS.locus_start">
+<tt class="descname">locus_start</tt><big>(</big><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.L80GPS.locus_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Starts the logger.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="microstacknode.gps.l80gps.L80GPS.locus_stop">
+<tt class="descname">locus_stop</tt><big>(</big><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.L80GPS.locus_stop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stops the logger.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="microstacknode.gps.l80gps.L80GPS.send_nmea_pkt">
+<tt class="descname">send_nmea_pkt</tt><big>(</big><em>pkt</em><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.L80GPS.send_nmea_pkt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write pkt to the serial port.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="microstacknode.gps.l80gps.L80GPS.set_periodic_normal">
+<tt class="descname">set_periodic_normal</tt><big>(</big><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.L80GPS.set_periodic_normal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the periodic mode to normal.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="microstacknode.gps.l80gps.L80GPS.sleep">
+<tt class="descname">sleep</tt><big>(</big><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.L80GPS.sleep" title="Permalink to this definition">¶</a></dt>
+<dd><p>Puts the GPS into sleep mode. Wake with <cite>set_periodic_normal</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="microstacknode.gps.l80gps.L80GPS.standby">
+<tt class="descname">standby</tt><big>(</big><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.L80GPS.standby" title="Permalink to this definition">¶</a></dt>
+<dd><p>Puts the GPS into standby mode.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="microstacknode.gps.l80gps.checksum_is_valid">
+<tt class="descclassname">microstacknode.gps.l80gps.</tt><tt class="descname">checksum_is_valid</tt><big>(</big><em>data_bytes</em>, <em>checksum</em><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.checksum_is_valid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns True is the logical OR of each consecutive databyte is
+the same as the checksum.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="microstacknode.gps.l80gps.degrees_and_minutes_to_degrees">
+<tt class="descclassname">microstacknode.gps.l80gps.</tt><tt class="descname">degrees_and_minutes_to_degrees</tt><big>(</big><em>degrees_and_minutes</em>, <em>direction</em><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.degrees_and_minutes_to_degrees" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts dddmm.mmmm to ddd.dddd...
+direction&#8217;s &#8216;s&#8217; and &#8216;w&#8217; are negative.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="microstacknode.gps.l80gps.gpgga_as_dict">
+<tt class="descclassname">microstacknode.gps.l80gps.</tt><tt class="descname">gpgga_as_dict</tt><big>(</big><em>gpgga_str</em><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.gpgga_as_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the GPGGA as a dictionary and the checksum.</p>
+<p>Returns latitude and longitude as degrees.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">gpgga_as_dict</span><span class="p">(</span><span class="s">&#39;$GPGGA,015540.000,A,3150.68378,N,11711.93139,E,1,17,0.6,0051.6,M,0.0,M,,*58&#39;</span><span class="p">)</span>
+<span class="go">({&#39;message_id&#39;: &#39;GPGGA&#39;,</span>
+<span class="go">  &#39;utc&#39;: 015540.000,</span>
+<span class="go">  &#39;latitude&#39;: 3150.68378,</span>
+<span class="go">  &#39;ns&#39;: &#39;N&#39;,</span>
+<span class="go">  &#39;longitude&#39;: 11711.93139,</span>
+<span class="go">  &#39;ew&#39;: &#39;E&#39;,</span>
+<span class="go">  &#39;fix&#39;: 1,</span>
+<span class="go">  &#39;number_of_sv&#39;: 17,</span>
+<span class="go">  &#39;hdop&#39;: 0.6,</span>
+<span class="go">  &#39;altitude&#39;: 0051.6,</span>
+<span class="go">  &#39;geoid_seperation&#39;: 0.0,</span>
+<span class="go">  &#39;dgps_age&#39;: &#39;&#39;,</span>
+<span class="go">  &#39;dgps_station_id&#39;: &#39;&#39;},</span>
+<span class="go">  77)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="microstacknode.gps.l80gps.gpgll_as_dict">
+<tt class="descclassname">microstacknode.gps.l80gps.</tt><tt class="descname">gpgll_as_dict</tt><big>(</big><em>gpgll_str</em><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.gpgll_as_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the GPGLL as a dictionary and the checksum.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">gpgll_as_dict</span><span class="p">(</span><span class="s">&#39;$GPGLL,3110.2908,N,12123.2348,E,041139.000,A,A*59&#39;</span><span class="p">)</span>
+<span class="go">({&#39;message_id&#39;: GPGLL,</span>
+<span class="go">  &#39;latitude&#39;: 3110.2908,</span>
+<span class="go">  &#39;ns&#39;: &#39;N&#39;,</span>
+<span class="go">  &#39;longitude&#39;: 12123.2348,</span>
+<span class="go">  &#39;ew&#39;: &#39;E&#39;,</span>
+<span class="go">  &#39;utc&#39;: 041139.000,</span>
+<span class="go">  &#39;data_valid&#39;: &#39;A&#39;,</span>
+<span class="go">  &#39;pos_mode&#39;: &#39;A&#39;},</span>
+<span class="go"> 59)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="microstacknode.gps.l80gps.gpgsa_as_dict">
+<tt class="descclassname">microstacknode.gps.l80gps.</tt><tt class="descname">gpgsa_as_dict</tt><big>(</big><em>gpgsa_str</em><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.gpgsa_as_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the GPGSA as a dictionary and the checksum.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">gpgsa_as_dict</span><span class="p">(</span><span class="s">&#39;$GPGSA,A,3,14,06,16,31,23,,,,,,,,1.66,1.42,0.84*0F&#39;</span><span class="p">)</span>
+<span class="go">({&#39;message_id&#39;: &#39;GPGSA&#39;,</span>
+<span class="go">  &#39;mode&#39;: &#39;A&#39;,</span>
+<span class="go">  &#39;fix&#39;: 3,</span>
+<span class="go">  &#39;satellites_on_channel&#39;: [14, 06, 16, 31, 23, 0, 0, 0, 0, 0, 0, 0],</span>
+<span class="go">  &#39;pdop&#39;: 1.66,</span>
+<span class="go">  &#39;hdop&#39;: 1.42,</span>
+<span class="go">  &#39;vdop&#39;: 0.84},</span>
+<span class="go">  77)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="microstacknode.gps.l80gps.gpgsv_as_dict">
+<tt class="descclassname">microstacknode.gps.l80gps.</tt><tt class="descname">gpgsv_as_dict</tt><big>(</big><em>gpgsv_str</em><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.gpgsv_as_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the GPGSV as a dictionary and the checksum.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">gpgsv_as_dict</span><span class="p">(</span><span class="s">&#39;$GPGSV,3,1,12,01,05,060,18,02,17,259,43,04,56,287,28,09,08,277,28*77&#39;</span><span class="p">)</span>
+<span class="go">({&#39;message_id&#39;: &#39;GPGSV&#39;,</span>
+<span class="go">  &#39;num_messages&#39;: 3,</span>
+<span class="go">  &#39;sequence_num&#39;: 1,</span>
+<span class="go">  &#39;satellites_in_view&#39;: 12,</span>
+<span class="go">  &#39;satellite&#39;: [{&#39;id&#39;: 01,</span>
+<span class="go">                 &#39;elevation&#39;: 05,</span>
+<span class="go">                 &#39;azimuth&#39;: 060,</span>
+<span class="go">                 &#39;snr&#39;: 18},</span>
+<span class="go">                {&#39;id&#39;: 02,</span>
+<span class="go">                 &#39;elevation&#39;: 17,</span>
+<span class="go">                 &#39;azimuth&#39;: 259,</span>
+<span class="go">                 &#39;snr&#39;: 43},</span>
+<span class="go">                {&#39;id&#39;: 04,</span>
+<span class="go">                 &#39;elevation&#39;: 56,</span>
+<span class="go">                 &#39;azimuth&#39;: 287,</span>
+<span class="go">                 &#39;snr&#39;: 28},</span>
+<span class="go">                {&#39;id&#39;: 09,</span>
+<span class="go">                 &#39;elevation&#39;: 08,</span>
+<span class="go">                 &#39;azimuth&#39;: 277,</span>
+<span class="go">                 &#39;snr&#39;: 28}]},</span>
+<span class="go">  77)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="microstacknode.gps.l80gps.gprmc_as_dict">
+<tt class="descclassname">microstacknode.gps.l80gps.</tt><tt class="descname">gprmc_as_dict</tt><big>(</big><em>gprmc_str</em><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.gprmc_as_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the GPRMC as a dictionary and the checksum.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">gprmc_as_dict</span><span class="p">(</span><span class="s">&#39;$GPRMC,013732.000,A,3150.7238,N,11711.7278,E,0.00,0.00,220413,,,A*68&#39;</span><span class="p">)</span>
+<span class="go">({&#39;message_id&#39;: &#39;GPRMC&#39;,</span>
+<span class="go">  &#39;utc&#39;: 0.0,</span>
+<span class="go">  &#39;data_valid&#39;: &#39;A&#39;,</span>
+<span class="go">  &#39;latitude&#39;: 3150.7238,</span>
+<span class="go">  &#39;ns&#39;: 0.0,</span>
+<span class="go">  &#39;longitude&#39;: 0.1,</span>
+<span class="go">  &#39;ew&#39;: &#39;A&#39;,</span>
+<span class="go">  &#39;speed&#39;:,</span>
+<span class="go">  &#39;cog&#39;:,</span>
+<span class="go">  &#39;date&#39;:,</span>
+<span class="go">  &#39;mag_var&#39;:,</span>
+<span class="go">  &#39;eq&#39;:,</span>
+<span class="go">  &#39;pos_mode&#39;:},</span>
+<span class="go">  0C)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="microstacknode.gps.l80gps.gptxt_as_dict">
+<tt class="descclassname">microstacknode.gps.l80gps.</tt><tt class="descname">gptxt_as_dict</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.gptxt_as_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>GPTXT Message ID
+XX Total number of messages in this transmission. (01~99)
+YY Message number in this transmission. (01~99)
+ZZ
+Severity of the message
+‘00’= ERROR
+‘01’= WARNING
+‘02’= NOTICE
+‘07’= USER
+Text messasage</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="microstacknode.gps.l80gps.gpvtg_as_dict">
+<tt class="descclassname">microstacknode.gps.l80gps.</tt><tt class="descname">gpvtg_as_dict</tt><big>(</big><em>gpvtg_str</em><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.gpvtg_as_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the GPVTG as a dictionary and the checksum.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">gpvtg_as_dict</span><span class="p">(</span><span class="s">&#39;$GPVTG,0.0,T,,M,0.0,N,0.1,K,A*0C&#39;</span><span class="p">)</span>
+<span class="go">({&#39;message_id&#39;: &#39;GPVTG&#39;,</span>
+<span class="go">  &#39;cogt&#39;: 0.0,</span>
+<span class="go">  &#39;t&#39;: &#39;A&#39;,</span>
+<span class="go">  &#39;cogm&#39;: &#39;&#39;,</span>
+<span class="go">  &#39;speedn&#39;: 0.0,</span>
+<span class="go">  &#39;speedk&#39;: 0.1,</span>
+<span class="go">  &#39;pos_mode&#39;: &#39;A&#39;},</span>
+<span class="go">  0C)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="microstacknode.gps.l80gps.hexstr2bytearray">
+<tt class="descclassname">microstacknode.gps.l80gps.</tt><tt class="descname">hexstr2bytearray</tt><big>(</big><em>s</em><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.hexstr2bytearray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a string of hex characters to bytes.</p>
+<blockquote>
+<div>&#8216;DEADBEEF&#8217;</div></blockquote>
+<p>becomes</p>
+<blockquote>
+<div>bytearray(b&#8217;\xde\xad\xbe\xef&#8217;)</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="microstacknode.gps.l80gps.l80gps_checksum_is_valid">
+<tt class="descclassname">microstacknode.gps.l80gps.</tt><tt class="descname">l80gps_checksum_is_valid</tt><big>(</big><em>gps_str</em><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.l80gps_checksum_is_valid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns True if the checksum is valid in an GPS L80 protocol line.</p>
+<p>!!!! This method assumes gps_str is a byte string. !!!!</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="microstacknode.gps.l80gps.parse_float">
+<tt class="descclassname">microstacknode.gps.l80gps.</tt><tt class="descname">parse_float</tt><big>(</big><em>bytes</em><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.parse_float" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts four bytes into a float.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="microstacknode.gps.l80gps.parse_int">
+<tt class="descclassname">microstacknode.gps.l80gps.</tt><tt class="descname">parse_int</tt><big>(</big><em>bytes</em><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.parse_int" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts two bytes into an interger.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="microstacknode.gps.l80gps.parse_locus_data">
+<tt class="descclassname">microstacknode.gps.l80gps.</tt><tt class="descname">parse_locus_data</tt><big>(</big><em>data</em>, <em>format='basic'</em><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.parse_locus_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the LOCUS data in a sensible structure according to the format.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="microstacknode.gps.l80gps.parse_long">
+<tt class="descclassname">microstacknode.gps.l80gps.</tt><tt class="descname">parse_long</tt><big>(</big><em>bytes</em><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.parse_long" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts four bytes into a long integer.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="microstacknode.gps.l80gps.pmtklog_as_dict">
+<tt class="descclassname">microstacknode.gps.l80gps.</tt><tt class="descname">pmtklog_as_dict</tt><big>(</big><em>pmtklog_str</em><big>)</big><a class="headerlink" href="#microstacknode.gps.l80gps.pmtklog_as_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the PMTKLOG as a dictionary and the checksum.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">pmtklog_as_dict</span><span class="p">(</span><span class="s">&#39;$PMTKLOG,456,0,11,31,2,0,0,0,3769,46*48&#39;</span><span class="p">)</span>
+<span class="go">({&#39;message_id&#39;: &#39;PMTKLOG&#39;,</span>
+<span class="go">  &#39;serial&#39;: 456,</span>
+<span class="go">  &#39;type&#39;: 0,</span>
+<span class="go">  &#39;mode&#39;: 11,</span>
+<span class="go">  &#39;content&#39;: 31,</span>
+<span class="go">  &#39;interval&#39;: 2,</span>
+<span class="go">  &#39;distance&#39;: 0,</span>
+<span class="go">  &#39;speed&#39;: 0,</span>
+<span class="go">  &#39;status&#39;: 0,</span>
+<span class="go">  &#39;number&#39;: 3769,</span>
+<span class="go">  &#39;percent&#39;: 46},</span>
+<span class="go"> 48)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+
+
+      </div>
+      <div class="bottomnav">
+      
+        <p>
+        «&#160;&#160;<a href="example.html">Examples</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="mma8452q_reference.html">MMA8452Q Accelerometer Reference</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer">
+        &copy; Copyright 2014, Thomas Preston.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Examples &mdash; Microstack Node 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Microstack Node 0.1.0 documentation" href="index.html" />
+    <link rel="next" title="L80GPS GPS Module Reference" href="l80gps_reference.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+  </head>
+  <body>
+      <div class="header"><h1 class="heading"><a href="index.html">
+          <span>Microstack Node 0.1.0 documentation</span></a></h1>
+        <h2 class="heading"><span>Examples</span></h2>
+      </div>
+      <div class="topnav">
+      
+        <p>
+        «&#160;&#160;<a href="installation.html">Installation</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="l80gps_reference.html">L80GPS GPS Module Reference</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="examples">
+<h1>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="l80-gps">
+<h2>L80 GPS<a class="headerlink" href="#l80-gps" title="Permalink to this headline">¶</a></h2>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">It usually takes about two minutes for the GPS module to get
+a GPS fix. Until then, the L80GPS object may throw exceptions.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Some commands may take one or more seconds to return. This is becasue
+L80GPS reading the latest data from the serial port which the
+GPS module is connected to. It only updates every second. It is
+normal for <tt class="docutils literal"><span class="pre">locus_query_data</span></tt> to take a long time to return.</p>
+</div>
+<div class="admonition-todo admonition" id="index-0">
+<p class="first admonition-title">Todo</p>
+<p class="last">Link to GPS command wiki describing what each of the GP*** do.</p>
+</div>
+<p>Basic GPS (GPGLL is useful for location/time):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">microstacknode.gps.l80gps</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gps</span> <span class="o">=</span> <span class="n">microstacknode</span><span class="o">.</span><span class="n">gps</span><span class="o">.</span><span class="n">l80gps</span><span class="o">.</span><span class="n">L80GPS</span><span class="p">()</span>  <span class="c"># creates a GPS object</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gps</span><span class="o">.</span><span class="n">gprmc</span>  <span class="c"># print the latest GPRMC data (errors if poor reception)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gps</span><span class="o">.</span><span class="n">gpvtg</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gps</span><span class="o">.</span><span class="n">gpgga</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gps</span><span class="o">.</span><span class="n">gpgsa</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gps</span><span class="o">.</span><span class="n">gpgsv</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gps</span><span class="o">.</span><span class="n">gpgll</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gps</span><span class="o">.</span><span class="n">gptxt</span>
+</pre></div>
+</div>
+<p>Extra modes:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">gps</span><span class="o">.</span><span class="n">standby</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gps</span><span class="o">.</span><span class="n">always_locate</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gps</span><span class="o">.</span><span class="n">sleep</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gps</span><span class="o">.</span><span class="n">set_periodic_normal</span><span class="p">()</span>  <span class="c"># wakes from sleep or always locate off</span>
+</pre></div>
+</div>
+<div class="section" id="locus-data-logging">
+<h3>LOCUS Data Logging<a class="headerlink" href="#locus-data-logging" title="Permalink to this headline">¶</a></h3>
+<p>The GPS unit can log data to its internal memory without anything
+driving it using the LOCUS logging system. The following commands
+interface with LOCUS:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">gps</span><span class="o">.</span><span class="n">locus_query</span><span class="p">()</span>       <span class="c"># Query the status of the LOCUS logger</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gps</span><span class="o">.</span><span class="n">locus_start</span><span class="p">()</span>       <span class="c"># Start the logger</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gps</span><span class="o">.</span><span class="n">locus_stop</span><span class="p">()</span>        <span class="c"># Stop the logger</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gps</span><span class="o">.</span><span class="n">locus_erase</span><span class="p">()</span>       <span class="c"># Erase all data items in the log</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gps</span><span class="o">.</span><span class="n">locus_query_data</span><span class="p">()</span>  <span class="c"># Return a list of data items in the logger</span>
+</pre></div>
+</div>
+<p>For example, you could issue the following command:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">gps</span><span class="o">.</span><span class="n">locus_start</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Shutdown/halt the device running Python, go for a walk, reboot, start
+Python and then run the following command and receive GPS data for the
+walk:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">gps</span><span class="o">.</span><span class="n">locus_query_data</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The logger will continue to log GPS data until it runs out of memory, at
+which point it will stop. Manually stop the LOCUS logger with:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">gps</span><span class="o">.</span><span class="n">locus_stop</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="mma8452-accelerometer">
+<h2>MMA8452 Accelerometer<a class="headerlink" href="#mma8452-accelerometer" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">microstacknode.accelerometer.mma8452q</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">accelerometer</span> <span class="o">=</span> <span class="n">microstacknode</span><span class="o">.</span><span class="n">accelerometer</span><span class="o">.</span><span class="n">mma8452q</span><span class="o">.</span><span class="n">MMA8452Q</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">accelerometer</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">accelerometer</span><span class="o">.</span><span class="n">get_xyz</span><span class="p">()</span>
+<span class="go">(0.00927734375, 0.00341796875, 0.49853515625)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">accelerometer</span><span class="o">.</span><span class="n">get_xyz</span><span class="p">(</span><span class="n">res12</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>  <span class="c"># turn off 12-bit resolution</span>
+<span class="go">(-0.0078125, -0.0078125, 0.5078125)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav">
+      
+        <p>
+        «&#160;&#160;<a href="installation.html">Installation</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="l80gps_reference.html">L80GPS GPS Module Reference</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer">
+        &copy; Copyright 2014, Thomas Preston.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

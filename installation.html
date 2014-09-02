@@ -1,0 +1,146 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Installation &mdash; Microstack Node 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Microstack Node 0.1.0 documentation" href="index.html" />
+    <link rel="next" title="Examples" href="example.html" />
+    <link rel="prev" title="Welcome to Microstack Node’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+      <div class="header"><h1 class="heading"><a href="index.html">
+          <span>Microstack Node 0.1.0 documentation</span></a></h1>
+        <h2 class="heading"><span>Installation</span></h2>
+      </div>
+      <div class="topnav">
+      
+        <p>
+        «&#160;&#160;<a href="index.html">Welcome to Microstack Node&#8217;s documentation!</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="example.html">Examples</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<p>Make sure you are using the lastest version of Raspbian:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo apt-get update
+$ sudo apt-get upgrade
+</pre></div>
+</div>
+<p>Install <tt class="docutils literal"><span class="pre">microstack-node</span></tt> for Python 3 with the following
+command:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo apt-get install python3-microstack-node
+</pre></div>
+</div>
+<div class="section" id="gps">
+<h2>GPS<a class="headerlink" href="#gps" title="Permalink to this headline">¶</a></h2>
+<p>The GPS uses the serial port which is usually configured to output logging
+data from the Raspberry Pi (for debugging). This needs to be disabled
+before the GPS can be used.</p>
+<p>Comment out the following line in <cite>/etc/inittab</cite> by putting a hash in
+front of it so that it goes from this:</p>
+<div class="highlight-python"><div class="highlight"><pre>T0:23:respawn:/sbin/getty -L ttyAMA0 115200 vt100
+</pre></div>
+</div>
+<p>To this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#T0:23:respawn:/sbin/getty -L ttyAMA0 115200 vt100</span>
+</pre></div>
+</div>
+<p>Also, remove all references to ttyAMA0 in <cite>/boot/cmdline.txt</cite> so that it
+goes from this:</p>
+<div class="highlight-python"><div class="highlight"><pre>dwc_otg.lpm_enable=0 console=ttyAMA0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline rootwait
+</pre></div>
+</div>
+<p>to this:</p>
+<div class="highlight-python"><div class="highlight"><pre>dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline rootwait
+</pre></div>
+</div>
+</div>
+<div class="section" id="testing">
+<h2>Testing<a class="headerlink" href="#testing" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="accelerometer">
+<h3>Accelerometer<a class="headerlink" href="#accelerometer" title="Permalink to this headline">¶</a></h3>
+<p>Dump accelerometer data with:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ python3 /usr/share/doc/python3-microstack-node/examples/accelcat.py
+</pre></div>
+</div>
+</div>
+<div class="section" id="id1">
+<h3>GPS<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>Dump GPS data:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ python3 /usr/share/doc/python3-microstack-node/examples/gpscat.py
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="other-gps-software">
+<h2>Other GPS Software<a class="headerlink" href="#other-gps-software" title="Permalink to this headline">¶</a></h2>
+<p>You might also want to install standard GPS software:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo apt-get install gpsd gpsd-clients python-gps
+</pre></div>
+</div>
+<p>You can dump GPS data with:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo gpsd /dev/ttyAMA0 -F /var/run/gpsd.sock
+</pre></div>
+</div>
+<p>or:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ cgps -s
+</pre></div>
+</div>
+<div class="section" id="automatically-starting-gps">
+<h3>Automatically Starting GPS<a class="headerlink" href="#automatically-starting-gps" title="Permalink to this headline">¶</a></h3>
+<p>Reconfigure the GPS daemon and choose &lt;yes&gt; when asked if you want to
+start <cite>gpsd</cite> automatically (use the defaults for the remaining options):</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo dpkg-reconfigure gpsd
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav">
+      
+        <p>
+        «&#160;&#160;<a href="index.html">Welcome to Microstack Node&#8217;s documentation!</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="example.html">Examples</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer">
+        &copy; Copyright 2014, Thomas Preston.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

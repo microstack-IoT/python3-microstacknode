@@ -1,0 +1,161 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>MMA8452Q Accelerometer Reference &mdash; Microstack Node 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Microstack Node 0.1.0 documentation" href="index.html" />
+    <link rel="prev" title="L80GPS GPS Module Reference" href="l80gps_reference.html" /> 
+  </head>
+  <body>
+      <div class="header"><h1 class="heading"><a href="index.html">
+          <span>Microstack Node 0.1.0 documentation</span></a></h1>
+        <h2 class="heading"><span>MMA8452Q Accelerometer Reference</span></h2>
+      </div>
+      <div class="topnav">
+      
+        <p>
+        «&#160;&#160;<a href="l80gps_reference.html">L80GPS GPS Module Reference</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="module-microstacknode.accelerometer.mma8452q">
+<span id="mma8452q-accelerometer-reference"></span><h1>MMA8452Q Accelerometer Reference<a class="headerlink" href="#module-microstacknode.accelerometer.mma8452q" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="microstacknode.accelerometer.mma8452q.MMA8452Q">
+<em class="property">class </em><tt class="descclassname">microstacknode.accelerometer.mma8452q.</tt><tt class="descname">MMA8452Q</tt><big>(</big><em>i2c_bus=1</em>, <em>i2c_address=29</em><big>)</big><a class="headerlink" href="#microstacknode.accelerometer.mma8452q.MMA8452Q" title="Permalink to this definition">¶</a></dt>
+<dd><p>Freescale MMA8452Q accelerometer.</p>
+<p><a class="reference external" href="http://www.freescale.com/files/sensors/doc/data_sheet/MMA8452Q.pdf">http://www.freescale.com/files/sensors/doc/data_sheet/MMA8452Q.pdf</a></p>
+<dl class="method">
+<dt id="microstacknode.accelerometer.mma8452q.MMA8452Q.get_xyz">
+<tt class="descname">get_xyz</tt><big>(</big><em>raw=False</em>, <em>res12=True</em><big>)</big><a class="headerlink" href="#microstacknode.accelerometer.mma8452q.MMA8452Q.get_xyz" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the values of the XYZ registers. By default it returns
+signed values at 12-bit resolution. You can specify a lower resolution
+(8-bit) or request the raw register values. Signed values are
+between the range -1 to +1 which are relative to the configured
+Full Scale Range (FSR).</p>
+<p>Since we can&#8217;t read arbitary registers from this chip over I2C
+(because there is no decent SMBus implementation, in Python 3 at
+least) we have to just read the first 7 registers and pull the
+XYZ data from that.</p>
+<p>Notes:</p>
+<ul>
+<li><p class="first">12-bit resolution from OUT MSB and OUT LSB registers:</p>
+<blockquote>
+<div><table border="1" class="docutils">
+<colgroup>
+<col width="33%" />
+<col width="33%" />
+<col width="33%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>msb</td>
+<td colspan="2">lsb</td>
+</tr>
+<tr class="row-even"><td>8 bits</td>
+<td>4 bits</td>
+<td>4 bits</td>
+</tr>
+<tr class="row-odd"><td colspan="2">value (12 bits)</td>
+<td>unused</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+</li>
+<li><p class="first">8-bit resolution just from OUT MSB:</p>
+<blockquote>
+<div><table border="1" class="docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>msb</td>
+<td>lsb</td>
+</tr>
+<tr class="row-even"><td>8 bits</td>
+<td>8 bits</td>
+</tr>
+<tr class="row-odd"><td>value</td>
+<td>unused</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>raw</strong> (<em>boolean (default: False)</em>) &#8211; If True: return raw, unsigned data, else: sign values</li>
+<li><strong>res12</strong> (<em>boolean (default: True)</em>) &#8211; If True: read 12-bit resolution, else: 8-bit</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="microstacknode.accelerometer.mma8452q.MMA8452QRegister">
+<em class="property">class </em><tt class="descclassname">microstacknode.accelerometer.mma8452q.</tt><tt class="descname">MMA8452QRegister</tt><big>(</big><em>address</em>, <em>chip</em><big>)</big><a class="headerlink" href="#microstacknode.accelerometer.mma8452q.MMA8452QRegister" title="Permalink to this definition">¶</a></dt>
+<dd><p>An 8 bit register inside an MMA8452Q. Since the native I2C driver
+does not support multiple starts (SMBus) we cannot fully implement
+register reads. Therefore the register value is stored locally.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="microstacknode.accelerometer.mma8452q.twos_complement">
+<tt class="descclassname">microstacknode.accelerometer.mma8452q.</tt><tt class="descname">twos_complement</tt><big>(</big><em>value</em>, <em>bits</em><big>)</big><a class="headerlink" href="#microstacknode.accelerometer.mma8452q.twos_complement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Signs a value with an arbitary number of bits.</p>
+</dd></dl>
+
+</div>
+
+
+      </div>
+      <div class="bottomnav">
+      
+        <p>
+        «&#160;&#160;<a href="l80gps_reference.html">L80GPS GPS Module Reference</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer">
+        &copy; Copyright 2014, Thomas Preston.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
