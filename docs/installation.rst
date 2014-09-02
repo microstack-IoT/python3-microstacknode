@@ -6,10 +6,10 @@ Make sure you are using the lastest version of Raspbian::
     $ sudo apt-get update
     $ sudo apt-get upgrade
 
-Install ``microstack-node`` (for Python 3 and 2) with the following
+Install ``microstack-node`` for Python 3 with the following
 command::
 
-    $ sudo apt-get install python{,3}-microstack-node
+    $ sudo apt-get install python3-microstack-node
 
 GPS
 ===
