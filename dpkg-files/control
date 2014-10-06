@@ -13,7 +13,7 @@ Depends: ${misc:Depends}, ${python:Depends},
          python-microstackcommon (>= 0.0.0), python-microstackcommon (<< 1.0.0)
 Description: The Microstack node functions module.
  Python module for interacting with Microstack products.
- Documentation: http://piface.github.io/microstacknode/
+ Documentation: http://microstack.github.io/microstacknode/
 
 Package: python3-microstacknode
 Architecture: all
@@ -21,4 +21,4 @@ Depends: ${misc:Depends}, ${python3:Depends},
          python3-microstackcommon (>= 0.0.0), python3-microstackcommon (<< 1.0.0)
 Description: The Microstack node functions module.
  Python 3 module for interacting with Microstack products.
- Documentation: http://piface.github.io/microstacknode/
+ Documentation: http://microstack.github.io/microstacknode/
