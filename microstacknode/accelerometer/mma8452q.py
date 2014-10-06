@@ -5,6 +5,7 @@ from microstackcommon.i2c import I2CMaster, writing_bytes, writing, reading
 
 DEFAULT_I2C_BUS = 1
 DEFAULT_I2C_ADDRESS = 0x1d
+# DEFAULT_I2C_ADDRESS = 0x1c
 
 # register addresses
 STATUS = 0x00
@@ -91,6 +92,11 @@ class MMA8452Q(object):
     # register 0x00 and subsequent registers (using a multiple read). Luckily
     # the XYZ registers are in the first few and we can access them using a
     # multi-read.
+
+    # Maybe we can get it working though. Try getting python-smbus working
+    # with Python 3
+    # http://www.spinics.net/lists/linux-i2c/msg08427.html
+    #http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/plain/Documentation/i2c/smbus-protocol
 
     # Special thanks for John Nivard for providing a working class, which
     # this one is based off. I have made changes for consistency with other

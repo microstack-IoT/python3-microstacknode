@@ -6,10 +6,10 @@ Make sure you are using the lastest version of Raspbian::
     $ sudo apt-get update
     $ sudo apt-get upgrade
 
-Install ``microstack-node`` for Python 3 with the following
+Install ``microstacknode`` for Python 3 with the following
 command::
 
-    $ sudo apt-get install python3-microstack-node
+    $ sudo apt-get install python3-microstacknode
 
 GPS
 ===
@@ -42,13 +42,13 @@ Accelerometer
 -------------
 Dump accelerometer data with::
 
-    $ python3 /usr/share/doc/python3-microstack-node/examples/accelcat.py
+    $ python3 /usr/share/doc/python3-microstacknode/examples/accelcat.py
 
 GPS
 ---
 Dump GPS data::
 
-    $ python3 /usr/share/doc/python3-microstack-node/examples/gpscat.py
+    $ python3 /usr/share/doc/python3-microstacknode/examples/gpscat.py
 
 
 Other GPS Software

@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+v0.1.1
+------
+- Changed docs for new install instructions (altered name) and also
+  changed default address for accelerometer.
+
 v0.1.0
 ------
 - Inital structure.
