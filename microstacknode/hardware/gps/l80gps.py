@@ -7,7 +7,7 @@ import time
 import serial
 import io
 import datetime
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 
 
 # Test these with `echo -e "\$PMTK161,0*28\r\n" > /dev/ttyAMA0`
@@ -42,7 +42,6 @@ class L80GPS(object):
     """
 
     def __init__(self, device="/dev/ttyAMA0"):
-        super().__init__()
         self.device_tx_rx = serial.Serial(device,
                                           baudrate=9600,
                                           bytesize=8,
@@ -322,11 +321,9 @@ def gprmc_as_dict(gprmc_str):
     gprmc_dict = {'message_id': message_id,
                   'utc': float(utc),
                   'data_valid': data_valid,
-                  'latitude': degrees_and_minutes_to_degrees(float(latitude),
-                                                             ns),
+                  'latitude': dm2d(float(latitude), ns),
                   'ns': ns,
-                  'longitude': degrees_and_minutes_to_degrees(float(longitude),
-                                                              ew),
+                  'longitude': dm2d(float(longitude), ew),
                   'ew': ew,
                   'speed': speed,
                   'cog': cog,
@@ -391,11 +388,9 @@ def gpgga_as_dict(gpgga_str):
     longitude = 0.0 if longitude == '' else longitude
     gpgga_dict = {'message_id': message_id,
                   'utc': float(utc),
-                  'latitude': degrees_and_minutes_to_degrees(float(latitude),
-                                                             ns),
+                  'latitude': dm2d(float(latitude), ns),
                   'ns': ns,
-                  'longitude': degrees_and_minutes_to_degrees(float(longitude),
-                                                              ew),
+                  'longitude': dm2d(float(longitude), ew),
                   'ew': ew,
                   'fix': fix,
                   'number_of_sv': number_of_sv,
@@ -516,11 +511,9 @@ def gpgll_as_dict(gpgll_str):
     longitude = 0.0 if longitude == '' else longitude
     utc = 0.0 if utc == '' else utc
     gpgll_dict = ({"message_id": message_id,
-                   "latitude": degrees_and_minutes_to_degrees(float(latitude),
-                                                              ns),
+                   "latitude": dm2d(float(latitude), ns),
                    "ns": ns,
-                   "longitude": degrees_and_minutes_to_degrees(float(longitude),
-                                                               ew),
+                   "longitude": dm2d(float(longitude), ew),
                    "ew": ew,
                    "utc": float(utc),
                    "data_valid": data_valid,
@@ -658,7 +651,7 @@ def parse_int(bytes):
     return number
 
 
-def degrees_and_minutes_to_degrees(degrees_and_minutes, direction):
+def dm2d(degrees_and_minutes, direction):
     """Converts dddmm.mmmm to ddd.dddd...
     direction's 's' and 'w' are negative.
     """
