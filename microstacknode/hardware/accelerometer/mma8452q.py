@@ -126,6 +126,13 @@ class MMA8452Q(object):
     def close(self):
         self.i2c_master.close()
 
+    def __enter__(self):
+        self.init()
+        return self
+
+    def __exit__(self):
+        self.close()
+
     def reset(self):
         self.ctrl_reg1.value = 0
 
