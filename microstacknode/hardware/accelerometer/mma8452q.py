@@ -123,6 +123,9 @@ class MMA8452Q(object):
         self.xyz_data_cfg.value = XYZ_DATA_CFG_FSR_2G  # +0.5 == 1G
         self.activate()
 
+    def close(self):
+        self.i2c_master.close()
+
     def reset(self):
         self.ctrl_reg1.value = 0
 
