@@ -69,7 +69,7 @@ class SHT21:
 
     def close(self):
         """Closes the i2c connection"""
-        self.i2c.close()
+        self.i2c_master.close()
 
 
     def __enter__(self):

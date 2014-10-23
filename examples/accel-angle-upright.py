@@ -3,7 +3,7 @@ return it to an upright position.
 """
 import time
 import datetime
-from microstacknode.accelerometer.mma8452q import MMA8452Q
+from microstacknode.hardware.accelerometer.mma8452q import MMA8452Q
 
 
 if __name__ == '__main__':
@@ -14,8 +14,8 @@ if __name__ == '__main__':
             y_angle = y * -180
             z_angle = 90 - (180 * z)
             print('Angle to upright @ {}:'.format(datetime.datetime.now()))
-            print('x:{}°'.format(x_angle))
-            print('y:{}°'.format(y_angle))
-            print('z:{}°'.format(z_angle))
+            print('x:{:.2f}°'.format(x_angle))
+            print('y:{:.2f}°'.format(y_angle))
+            print('z:{:.2f}°'.format(z_angle))
             print()
-            time.sleep(0.5)
+            time.sleep(1)

@@ -1,7 +1,7 @@
 import logging
 import serial
-from microstack.hardware.gps.l80gps import L80GPS
-from microstack.hardware.gps.accelerometer.mma8452q import MMA8452Q
+from microstacknode.hardware.gps.l80gps import L80GPS
+from microstacknode.hardware.accelerometer.mma8452q import MMA8452Q
 
 
 # logging.basicConfig(level=logging.DEBUG)
