@@ -24,15 +24,37 @@ class TestMMA8452Q(unittest.TestCase):
         char_sprite = CharSprite('a', FourByFiveFont())
         self.display.draw_sprite(0, 0, char_sprite)
 
+    @unittest.skip
     def test_character_printing(self):
         str_sprite = StringSprite('ALPHABET', 'R', MinecraftiaFont())
         self.display.draw_sprite(0, 0, str_sprite)
 
     def test_rectangle(self):
-        sprite = Sprite(96,16)
-        sprite.draw_rectangle(2,3,4,5,1)
-        sprite.draw_rectangle(30,3,5,5)     
-        self.display.draw_sprite(0,0, sprite)
+        sprite = Sprite(10, 16)
+        sprite.draw_rectangle(0, 0, 10, 16, 1)
+        sprite.draw_rectangle(1, 1, 5, 5)
+        self.display.draw_sprite(0, 0, sprite)
+        # time.sleep(1)
+        # sprite.invert_vertical()
+        # self.display.draw_sprite(0, 0, sprite)
+        # time.sleep(1)
+        # sprite.invert_horizontal()
+        # self.display.draw_sprite(0, 0, sprite)
+        time.sleep(1)
+        sprite.rotate90(3)
+        self.display.clear_display()
+        self.display.draw_sprite(0, 0, sprite)
+
+        # time.sleep(1)
+        # sprite.rotate90()
+        # self.display.clear_display()
+        # self.display.draw_sprite(0, 0, sprite)
+
+        # time.sleep(1)
+        # sprite.rotate90()
+        # self.display.clear_display()
+        # self.display.draw_sprite(0, 0, sprite)
+
 
 
 if __name__ == "__main__":
