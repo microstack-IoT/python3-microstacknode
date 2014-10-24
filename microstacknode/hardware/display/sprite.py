@@ -47,14 +47,16 @@ class Sprite(object):
 
     def render_sprite(self, x, y, sprite_to_draw):
         """Renders the sprite given as an argument on this sprite at (x, y)."""
-        for j in range(self.height):
-            for i in range(self.width):
+        for j in range(sprite_to_draw.height):
+            for i in range(sprite_to_draw.width):
                 new_x = x + i
                 new_y = y + j
                 we_can_draw_x = 0 <= new_x < self.width
                 we_can_draw_y = 0 <= new_y < self.height
                 if we_can_draw_x and we_can_draw_y:
-                    self.set_pixel(new_x, new_y, sprite_to_draw.get_pixel(x, y))
+                    self.set_pixel(new_x,
+                                   new_y,
+                                   sprite_to_draw.get_pixel(i, j))
 
     def get_sprite(self, x, y, width, height):
         """Returns a new sprite of dimensions width x height from the

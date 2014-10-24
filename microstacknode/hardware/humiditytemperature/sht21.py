@@ -2,6 +2,9 @@ import time
 from microstackcommon.i2c import I2CMaster, writing_bytes, writing, reading
 
 
+DEFAULT_I2C_BUS = 1
+
+
 class ChecksumFailedError(Exception):
     pass
 
@@ -25,7 +28,7 @@ class SHT21:
     _CMD_TEMPERATURE_NO_HOLD = 0xF3
     _CMD_HUMIDITY_NO_HOLD = 0xF5
 
-    def __init__(self, i2c_bus=0):
+    def __init__(self, i2c_bus=DEFAULT_I2C_BUS):
         """Opens the i2c device (assuming that the kernel modules have been
         loaded).  Note that this has only been tested on first revision
         raspberry pi where the device_number = 0, but it should work

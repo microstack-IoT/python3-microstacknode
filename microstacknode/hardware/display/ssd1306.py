@@ -44,6 +44,13 @@ class SSD1306(object):
         self.i2c_master = I2CMaster(i2c_bus)
         self._clear_buffer()
 
+    def __enter__(self):
+        self.init()
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.close()
+
     def _send_command(self, *cmd):
         # co = 0
         # dc = 0
@@ -158,9 +165,9 @@ class SSD1306(object):
         """In a normal display a RAM data of 1 indicates an “ON” pixel."""
         self._send_command(CMD_SET_NORMAL_DISPLAY)
 
-    def set_inverse_display(self, ratio):
+    def set_inverse_display(self):
         """In an inverse display a RAM data of 0 indicates an “ON” pixel."""
-        self._send_command(CMD_SET_INVERSE_DISPLAY, ratio)
+        self._send_command(CMD_SET_INVERSE_DISPLAY)
 
     def set_multiplex_ratio(self, ratio):
         """This command switches the default 63 multiplex mode to any
@@ -213,6 +220,7 @@ class SSD1306(object):
         tables (Table 10-1, Table 10-2) show the example of setting the
         command C0h/C8h and D3h.
         """
+        # TODO negative offset
         self._send_command(CMD_SET_DISPLAY_OFFSET, offset)
 
     def set_display_clock_divide_ratio(self, freq_and_ratio):
@@ -281,15 +289,23 @@ class SSD1306(object):
             self.clear_display()
         self.set_display_on()
 
+    def close(self):
+        self.i2c_master.close()
+
     def update_display(self):
         self.set_col_address(0x00, WIDTH-1)
         self.set_page_address(0x00, NUM_PAGES-1)
         self._send_data(*self._buffer)
 
-    def clear_display(self):
-        """Clears the display."""
+    def clear_display(self, update_display=True):
+        """Clears the display.
+
+        :param update_display: Update display after writing to buffer.
+        :type update_display: boolean
+        """
         self._clear_buffer()
-        self.update_display()
+        if update_display:
+            self.update_display()
 
     def set_pixel(self, x, y, state, update_display=True):
         """Sets the pixel at (x, y) to be on or off.
@@ -314,12 +330,17 @@ class SSD1306(object):
         if update_display:
             self.update_display()
 
-    def draw_sprite(self, x, y, sprite):
-        """Draw the sprite onto the display at (x, y)."""
+    def draw_sprite(self, x, y, sprite, update_display=True):
+        """Draw the sprite onto the display at (x, y).
+
+        :param update_display: Update display after writing to buffer.
+        :type update_display: boolean
+        """
         for j in range(sprite.height):
             for i in range(sprite.width):
                 self.set_pixel(x+i,
                                y+j,
                                sprite.get_pixel(i, j),
                                update_display=False)
-        self.update_display()
+        if update_display:
+            self.update_display()
