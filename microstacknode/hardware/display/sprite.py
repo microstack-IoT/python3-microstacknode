@@ -74,6 +74,26 @@ class Sprite(object):
         return new_sprite
 
 
+    def draw_rectangle(self,x,y,width,height,line_weight=0):
+        """Draw a rectangle on this sprite.
+        """
+        if not line_weight: 
+            for j in range(height):
+                for i in range(width):
+                    self.set_pixel(x+i, y+j)
+        else:
+            for i in range(height):
+                for j in range(line_weight):
+                    self.set_pixel(x+j, y+i)
+                    self.set_pixel(x+height-j, y+i)
+
+            for i in range(width):
+                for j in range(line_weight):
+                    self.set_pixel(x+i, y+j)
+                    self.set_pixel(x+i, y+width-j)              
+
+
+
 class CharSprite(Sprite):
     """Character sprite displays an alphanumerical character using a Font."""
 
