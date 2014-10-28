@@ -79,6 +79,10 @@ XYZ_DATA_CFG_FSR_4G = 0x01
 XYZ_DATA_CFG_FSR_8G = 0x02
 
 
+class ForceRangeNotAvailable(Exception):
+    pass
+
+
 class MMA8452Q(object):
     """Freescale MMA8452Q accelerometer.
 
@@ -120,7 +124,7 @@ class MMA8452Q(object):
         self.i2c_master.open()
         self.standby()
         self.ctrl_reg1.value = CTRL_REG1_ODR_800  # set sample rate 800Hz
-        self.xyz_data_cfg.value = XYZ_DATA_CFG_FSR_2G  # +0.5 == 1G
+        self.set_g_range(2)  # +0.5 == 1G
         self.activate()
 
     def close(self):
@@ -206,6 +210,21 @@ class MMA8452Q(object):
             z = twos_complement(z, resolution) * gmul
 
         return x, y, z
+
+    def set_g_range(self, g_range):
+        """Sets the force range (in Gs -- where 1G is the force of gravity).
+
+        :param g_range: The force range in Gs.
+        :type g_range: int (acceptable ranges: 2, 4 or 8)
+        """
+        g_ranges = {2: XYZ_DATA_CFG_FSR_2G,
+                    4: XYZ_DATA_CFG_FSR_4G,
+                    8: XYZ_DATA_CFG_FSR_8G)
+        if g_range not in g_ranges:
+            raise ForceRangeNotAvailable(
+                "{} is not in {}".format(g_range, g_ranges))
+        else:
+            self.xyz_data_cfg.value = g_ranges[g_range]
 
 
 class MMA8452QRegister(object):
