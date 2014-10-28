@@ -117,7 +117,12 @@ class FourByFiveFont(Font):
         return self.char_map[character]
 
 
-class MinecraftiaFont(Font):
+class BlockFont(Font):
+    """A block font based based on the Minecraftia font.
+
+        http://www.dafont.com/minecraftia.font
+
+    """
 
     char_height = 8
     char_width = 5

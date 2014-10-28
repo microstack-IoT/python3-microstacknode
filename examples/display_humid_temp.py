@@ -4,7 +4,7 @@ import datetime
 from microstacknode.hardware.display.ssd1306 import SSD1306
 from microstacknode.hardware.humiditytemperature.sht21 import SHT21
 from microstacknode.hardware.display.font import (FourByFiveFont,
-                                                  MinecraftiaFont)
+                                                  BlockFont)
 from microstacknode.hardware.display.sprite import StringSprite
 
 
@@ -17,7 +17,7 @@ if __name__ == '__main__':
             temperature_str = 'Temp:{:.2f}°C'.format(
                  htsensor.get_temperature())
 
-            font = MinecraftiaFont()
+            font = BlockFont()
             humidity_str_sprite = StringSprite(humidity_str, 'R', font)
             temperature_str_sprite = StringSprite(temperature_str, 'R', font)
 
