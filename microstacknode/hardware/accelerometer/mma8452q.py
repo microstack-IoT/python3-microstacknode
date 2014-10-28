@@ -219,7 +219,7 @@ class MMA8452Q(object):
         """
         g_ranges = {2: XYZ_DATA_CFG_FSR_2G,
                     4: XYZ_DATA_CFG_FSR_4G,
-                    8: XYZ_DATA_CFG_FSR_8G)
+                    8: XYZ_DATA_CFG_FSR_8G}
         if g_range not in g_ranges:
             raise ForceRangeNotAvailable(
                 "{} is not in {}".format(g_range, g_ranges))
