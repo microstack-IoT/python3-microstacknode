@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+v0.2.0
+------
+- Moved internal hardware drivers to hardware directory.
+- Added display and humidity/temperature sensor drivers.
+- Added examples for drivers.
+- NOT updated HTML docs for new changes. This will be done in the next
+  update.
+
 v0.1.1
 ------
 - Changed docs for new install instructions (altered name) and also
