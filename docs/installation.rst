@@ -6,10 +6,10 @@ Make sure you are using the lastest version of Raspbian::
     $ sudo apt-get update
     $ sudo apt-get upgrade
 
-Install ``microstack-node`` (for Python 3 and 2) with the following
+Install ``microstacknode`` for Python 3 with the following
 command::
 
-    $ sudo apt-get install python{,3}-microstack-node
+    $ sudo apt-get install python3-microstacknode
 
 GPS
 ===
@@ -35,16 +35,6 @@ to this::
 
     dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline rootwait
 
-You might also want to install standard GPS software::
-
-    $ sudo apt-get install gpsd gpsd-clients python-gps
-
-Automatically Starting GPS
---------------------------
-Reconfigure the GPS daemon and choose <yes> when asked if you want to
-start `gpsd` automatically (use the defaults for the remaining options)::
-
-    $ sudo dpkg-reconfigure gpsd
 
 Testing
 =======
@@ -52,18 +42,32 @@ Accelerometer
 -------------
 Dump accelerometer data with::
 
-    $ python3 /usr/share/doc/python3-microstack-node/examples/accelcat.py
+    $ python3 /usr/share/doc/python3-microstacknode/examples/accelcat.py
 
 GPS
 ---
 Dump GPS data::
 
-    $ python3 /usr/share/doc/python3-microstack-node/examples/gpscat.py
+    $ python3 /usr/share/doc/python3-microstacknode/examples/gpscat.py
 
-or::
+
+Other GPS Software
+==================
+You might also want to install standard GPS software::
+
+    $ sudo apt-get install gpsd gpsd-clients python-gps
+
+You can dump GPS data with::
 
     $ sudo gpsd /dev/ttyAMA0 -F /var/run/gpsd.sock
 
 or::
 
     $ cgps -s
+
+Automatically Starting GPS
+--------------------------
+Reconfigure the GPS daemon and choose <yes> when asked if you want to
+start `gpsd` automatically (use the defaults for the remaining options)::
+
+    $ sudo dpkg-reconfigure gpsd

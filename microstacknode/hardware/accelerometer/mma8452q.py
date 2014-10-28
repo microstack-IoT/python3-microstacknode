@@ -5,6 +5,7 @@ from microstackcommon.i2c import I2CMaster, writing_bytes, writing, reading
 
 DEFAULT_I2C_BUS = 1
 DEFAULT_I2C_ADDRESS = 0x1d
+# DEFAULT_I2C_ADDRESS = 0x1c
 
 # register addresses
 STATUS = 0x00
@@ -78,6 +79,10 @@ XYZ_DATA_CFG_FSR_4G = 0x01
 XYZ_DATA_CFG_FSR_8G = 0x02
 
 
+class ForceRangeNotAvailable(Exception):
+    pass
+
+
 class MMA8452Q(object):
     """Freescale MMA8452Q accelerometer.
 
@@ -91,6 +96,11 @@ class MMA8452Q(object):
     # register 0x00 and subsequent registers (using a multiple read). Luckily
     # the XYZ registers are in the first few and we can access them using a
     # multi-read.
+
+    # Maybe we can get it working though. Try getting python-smbus working
+    # with Python 3
+    # http://www.spinics.net/lists/linux-i2c/msg08427.html
+    #http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/plain/Documentation/i2c/smbus-protocol
 
     # Special thanks for John Nivard for providing a working class, which
     # this one is based off. I have made changes for consistency with other
@@ -114,8 +124,18 @@ class MMA8452Q(object):
         self.i2c_master.open()
         self.standby()
         self.ctrl_reg1.value = CTRL_REG1_ODR_800  # set sample rate 800Hz
-        self.xyz_data_cfg.value = XYZ_DATA_CFG_FSR_2G  # +0.5 == 1G
+        self.set_g_range(2)  # +0.5 == 1G
         self.activate()
+
+    def close(self):
+        self.i2c_master.close()
+
+    def __enter__(self):
+        self.init()
+        return self
+
+    def __exit__(self):
+        self.close()
 
     def reset(self):
         self.ctrl_reg1.value = 0
@@ -190,6 +210,21 @@ class MMA8452Q(object):
             z = twos_complement(z, resolution) * gmul
 
         return x, y, z
+
+    def set_g_range(self, g_range):
+        """Sets the force range (in Gs -- where 1G is the force of gravity).
+
+        :param g_range: The force range in Gs.
+        :type g_range: int (acceptable ranges: 2, 4 or 8)
+        """
+        g_ranges = {2: XYZ_DATA_CFG_FSR_2G,
+                    4: XYZ_DATA_CFG_FSR_4G,
+                    8: XYZ_DATA_CFG_FSR_8G)
+        if g_range not in g_ranges:
+            raise ForceRangeNotAvailable(
+                "{} is not in {}".format(g_range, g_ranges))
+        else:
+            self.xyz_data_cfg.value = g_ranges[g_range]
 
 
 class MMA8452QRegister(object):
