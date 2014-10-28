@@ -29,8 +29,10 @@ setup(
     license='GPLv3+',
     url='https://github.com/microstack/microstacknode',
     packages=['microstacknode',
-              'microstacknode.gps',
-              'microstacknode.accelerometer'],
+              'microstacknode.hardware.gps',
+              'microstacknode.hardware.accelerometer',
+              'microstacknode.hardware.display',
+              'microstacknode.hardware.humiditytemperature'],
     long_description=open('README.md').read() + open('CHANGELOG').read(),
     classifiers=[
         "License :: OSI Approved :: GNU Affero General Public License v3 or "
