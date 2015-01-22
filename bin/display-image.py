@@ -27,5 +27,6 @@ if __name__ == '__main__':
         print("")
     else:
         sprite = image_to_sprite(sys.argv[1])
-        with SSD1306() as display:
-            display.draw_sprite(0, 0, sprite)
+        print(sprite.pixel_state)
+        # with SSD1306() as display:
+        #     display.draw_sprite(0, 0, sprite)
