@@ -11,6 +11,17 @@ command::
 
     $ sudo apt-get install python3-microstacknode
 
+Then enable I2C and SPI by running::
+
+    sudo raspi-config
+
+And then navigating to::
+
+    Advanced Options > I2C > Enable
+    Advanced Options > SPI > Enable
+
+Then reboot.
+
 GPS
 ===
 The GPS uses the serial port which is usually configured to output logging

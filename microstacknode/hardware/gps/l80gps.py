@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # http://www.gsm-rainbow.ru/sites/default/files/
 # l80_gps_protocol_specification_v1.0.pdf
 import threading

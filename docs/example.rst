@@ -62,6 +62,7 @@ which point it will stop. Manually stop the LOCUS logger with::
 
     >>> gps.locus_stop()
 
+
 MMA8452 Accelerometer
 =====================
 ::
@@ -75,3 +76,35 @@ MMA8452 Accelerometer
 
     >>> accelerometer.get_xyz(res12=False)  # turn off 12-bit resolution
     (-0.0078125, -0.0078125, 0.5078125)
+
+
+SHT21 Humidity and Temperature Sensor
+=====================================
+::
+
+    >>> import microstacknode.hardware.humiditytemperature.sht21
+    >>> htsensor = microstacknode.hardware.humiditytemperature.sht21.SHT21()
+    >>> htsensor.init()
+
+    >>> htsensor.get_temperature()
+    16.55
+    >>> htsensor.get_humidity()
+    40.46
+
+    >>> print('Temp:{:.2f}°C'.format(htsensor.get_temperature()))
+    Temp:16.55°C
+    >>> print('H:{:.2f}%RH'.format(htsensor.get_humidity()))
+    H:40.46%RH
+
+
+SSD1306 Display
+===============
+::
+
+    from microstacknode.hardware.display.ssd1306 import SSD1306
+    from microstacknode.hardware.display.font import FourByFiveFont
+    from microstacknode.hardware.display.sprite import StringSprite
+
+    with SSD1306() as display:
+        msg_sprite = StringSprite('Hello World!', 'R', FourByFiveFont())
+        display.draw_sprite(0, 0, msg_sprite)
