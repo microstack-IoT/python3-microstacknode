@@ -7,7 +7,7 @@ import time
 import unittest
 import microstacknode.hardware.display.ssd1306
 from microstacknode.hardware.display.font import (FourByFiveFont,
-                                                  MinecraftiaFont)
+                                                  BlockFont)
 from microstacknode.hardware.display.sprite import (Sprite,
                                                     CharSprite,
                                                     StringSprite)

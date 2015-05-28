@@ -9,8 +9,11 @@ class TestLSM9DS0(unittest.TestCase):
             l.enable_temperature()
             self.assertTrue(l.get_temperature() > 0)
 
-    # def test_accelerometer(self):
-    #     with LSM9DS0(1) as l:
+    def test_accelerometer(self):
+        with LSM9DS0(1) as l:
+            l.setup_accelerometer()
+            print(l.get_accelerometer())
+            print(l.get_accelerometer(raw=True))
 
 
 

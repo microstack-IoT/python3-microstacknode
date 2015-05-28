@@ -107,7 +107,10 @@ class LSM9DS0(I2CMaster):
         self.act_ths = LSM9DS0Register(0x3E, self.XM_I2C_ADDR, self)
         self.act_dur = LSM9DS0Register(0x3F, self.XM_I2C_ADDR, self)
 
+    def __enter__(self):
+        self = super().__enter__()
         self.verify_whoami()
+        return self
 
     def verify_whoami(self):
         assert(self.who_am_i_xm.get() == 0x49)
@@ -124,11 +127,14 @@ class LSM9DS0(I2CMaster):
                             fifo_enable=False,
                             fifo_watermark_enable=False,
                             high_pass_filter_enable=False,
-                            accel_sample_rate=100,
+                            sample_rate=100,
                             continious_update=True,
-                            accel_x_enable=True,
-                            accel_y_enable=True,
-                            accel_z_enable=True):
+                            x_enable=True,
+                            y_enable=True,
+                            z_enable=True,
+                            anti_alias_filter_bandwidth=773,
+                            full_scale=2,
+                            self_test='normal'):
         # CTRL_REG0
         ctrl_reg0_value = 0
         if fifo_enable:
@@ -152,23 +158,83 @@ class LSM9DS0(I2CMaster):
                                      400: 0b1000 << 4,
                                      800: 0b1001 << 4,
                                      1600: 0b1010 << 4}
-        if accel_sample_rate in acceleration_sample_rates:
-            ctrl_reg1_value |= acceleration_sample_rates[accel_sample_rate]
+        if sample_rate in acceleration_sample_rates:
+            ctrl_reg1_value |= acceleration_sample_rates[sample_rate]
         if not continious_update:
             ctrl_reg1_value |= 1 << 3
-        if accel_z_enable:
+        if z_enable:
             ctrl_reg1_value |= 1 << 2
-        if accel_y_enable:
+        if y_enable:
             ctrl_reg1_value |= 1 << 1
-        if accel_x_enable:
+        if x_enable:
             ctrl_reg1_value |= 1
         self.ctrl_reg1_xm.set(ctrl_reg1_value)
 
         # CTRL_REG2
-        # YOU ARE HERE
+        ctrl_reg2_value = 0
+        aaafb = {773: 0b00 << 5,
+                 194: 0b01 << 5,
+                 362: 0b10 << 5,
+                 50: 0b11 << 5}
+        if anti_alias_filter_bandwidth in aaafb:
+            ctrl_reg2_value |= aaafb[anti_alias_filter_bandwidth]
+        fss = {2: 0b000 << 3,
+               4: 0b001 << 3,
+               6: 0b010 << 3,
+               8: 0b011 << 3,
+               16: 0b100 << 3}
+        if full_scale in fss:
+            ctrl_reg2_value |= fss[full_scale]
+        st = {'normal': 0b00 << 1,
+              'positive': 0b01 << 1,
+              'negative': 0b10 << 1}
+        if self_test in st:
+            ctrl_reg2_value |= st[self_test]
+        self.ctrl_reg2_xm.set(ctrl_reg2_value)
 
-    def get_accelerometer(self):
+    def setup_interrupts(self):
+        # interrupts
+        # CTRL_REG3
+        # ctrl_reg3_value = 0
+        # self.ctrl_reg3_xm.set(ctrl_reg3_value)
+        # CTRL_REG4
+        # ctrl_reg4_value = 0
+        # self.ctrl_reg4_xm.set(ctrl_reg4_value)
         pass
+
+    def setup_magnetometer(self,
+                           temperature_sensor_enable=True):
+        # CTRL_REG5
+        ctrl_reg5_value = 0
+        if temperature_sensor_enable:
+            ctrl_reg5_value |= 1 << 7
+        self.ctrl_reg5_xm.set(ctrl_reg5_value)
+        # CTRL_REG6
+        # ctrl_reg6_value = 0
+        # self.ctrl_reg6_xm.set(ctrl_reg6_value)
+        # CTRL_REG7
+        # ctrl_reg7_value = 0
+        # self.ctrl_reg7_xm.set(ctrl_reg7_value)
+
+    def setup_gyroscope(self):
+        pass
+
+    def get_accelerometer(self, raw=False):
+        xlo, xhi, ylo, yhi, zlo, zhi = self.out_x_l_a.get_bulk(6)
+        a = {'x': xhi << 8 | xlo,
+             'y': yhi << 8 | ylo,
+             'z': zhi << 8 | zlo}
+        acceleration_vector = {axis: twos_complement(magnitude, 16)
+                               for axis, magnitude in a.items()}
+        if raw:
+            return acceleration_vector
+        else:
+            scales = [2, 4, 6, 8, 16]
+            scale_index = (self.ctrl_reg2_xm.get() >> 3) & 0b111
+            def scale(m):
+                return m / 2**15 * scales[scale_index]
+            return {axis: scale(magnitude)
+                    for axis, magnitude in acceleration_vector.items()}
 
 
 class LSM9DS0Register(object):
