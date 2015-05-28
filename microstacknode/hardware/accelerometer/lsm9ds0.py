@@ -123,18 +123,30 @@ class LSM9DS0(I2CMaster):
         t_low, t_high = self.out_temp_l_xm.get_bulk(2)
         return twos_complement((t_high << 8) | t_low, 12)
 
+    def setup_interrupts(self):
+        # interrupts
+        # CTRL_REG3
+        # ctrl_reg3_value = 0
+        # self.ctrl_reg3_xm.set(ctrl_reg3_value)
+        # CTRL_REG4
+        # ctrl_reg4_value = 0
+        # self.ctrl_reg4_xm.set(ctrl_reg4_value)
+        raise NotImplementedError()
+
     def setup_accelerometer(self,
                             fifo_enable=False,
                             fifo_watermark_enable=False,
                             high_pass_filter_enable=False,
-                            sample_rate=100,
+                            data_rate=100,
                             continious_update=True,
                             x_enable=True,
                             y_enable=True,
                             z_enable=True,
                             anti_alias_filter_bandwidth=773,
                             full_scale=2,
-                            self_test='normal'):
+                            self_test='normal',
+                            high_pass_filter_mode='normalreset',
+                            filtered_data_selection=False):
         # CTRL_REG0
         ctrl_reg0_value = 0
         if fifo_enable:
@@ -147,19 +159,19 @@ class LSM9DS0(I2CMaster):
 
         # CTRL_REG1
         ctrl_reg1_value = 0
-        acceleration_sample_rates = {0: 0b0000 << 4,
-                                     3.125: 0b0001 << 4,
-                                     6.25: 0b0010 << 4,
-                                     12.5: 0b0011 << 4,
-                                     25: 0b0100 << 4,
-                                     50: 0b0101 << 4,
-                                     100: 0b0110 << 4,
-                                     200: 0b0111 << 4,
-                                     400: 0b1000 << 4,
-                                     800: 0b1001 << 4,
-                                     1600: 0b1010 << 4}
-        if sample_rate in acceleration_sample_rates:
-            ctrl_reg1_value |= acceleration_sample_rates[sample_rate]
+        acceleration_data_rates = {0: 0b0000 << 4,
+                                   3.125: 0b0001 << 4,
+                                   6.25: 0b0010 << 4,
+                                   12.5: 0b0011 << 4,
+                                   25: 0b0100 << 4,
+                                   50: 0b0101 << 4,
+                                   100: 0b0110 << 4,
+                                   200: 0b0111 << 4,
+                                   400: 0b1000 << 4,
+                                   800: 0b1001 << 4,
+                                   1600: 0b1010 << 4}
+        if data_rate in acceleration_data_rates:
+            ctrl_reg1_value |= acceleration_data_rates[data_rate]
         if not continious_update:
             ctrl_reg1_value |= 1 << 3
         if z_enable:
@@ -185,6 +197,7 @@ class LSM9DS0(I2CMaster):
                16: 0b100 << 3}
         if full_scale in fss:
             ctrl_reg2_value |= fss[full_scale]
+            self._accelerometer_full_scale = full_scale
         st = {'normal': 0b00 << 1,
               'positive': 0b01 << 1,
               'negative': 0b10 << 1}
@@ -192,49 +205,198 @@ class LSM9DS0(I2CMaster):
             ctrl_reg2_value |= st[self_test]
         self.ctrl_reg2_xm.set(ctrl_reg2_value)
 
-    def setup_interrupts(self):
-        # interrupts
-        # CTRL_REG3
-        # ctrl_reg3_value = 0
-        # self.ctrl_reg3_xm.set(ctrl_reg3_value)
-        # CTRL_REG4
-        # ctrl_reg4_value = 0
-        # self.ctrl_reg4_xm.set(ctrl_reg4_value)
-        pass
+        # CTRL_REG7
+        ctrl_reg7_value = 0
+        high_pass_filter_modes = {'normalreset': 0b00 << 6,
+                                  'reference': 0b01 << 6,
+                                  'normal': 0b10 << 6,
+                                  'autoreset': 0b11 << 6}
+        if high_pass_filter_mode in high_pass_filter_modes:
+            ctrl_reg7_value |= high_pass_filter_modes[high_pass_filter_mode]
+        if filtered_data_selection:
+            ctrl_reg7_value |= 1 << 5
+        # do not disturb other half of CTRL_REG7
+        ctrl_reg7_value |= self.ctrl_reg7_xm.get() & 0x1F
+        self.ctrl_reg7_xm.set(ctrl_reg7_value)
 
     def setup_magnetometer(self,
-                           temperature_sensor_enable=True):
+                           temperature_sensor_enable=True,
+                           high_resolution=False,
+                           data_rate=25,
+                           latch_interrupt_request_2=False,
+                           latch_interrupt_request_1=False,
+                           full_scale=4,
+                           low_power=False,
+                           sensor_mode='single'):
         # CTRL_REG5
         ctrl_reg5_value = 0
         if temperature_sensor_enable:
             ctrl_reg5_value |= 1 << 7
+        if high_resolution:
+            ctrl_reg5_value |= 0b11 << 5
+        data_rates = {3.125: 0b000 << 2,
+                      6.25: 0b001 << 2,
+                      12.5: 0b010 << 2,
+                      25: 0b011 << 2,
+                      50: 0b100 << 2,
+                      100: 0b101 << 2}
+        if data_rate in data_rates:
+            ctrl_reg5_value |= data_rates[data_rate]
+        if latch_interrupt_request_2:
+            ctrl_reg5_value |= 1 << 1
+        if latch_interrupt_request_1:
+            ctrl_reg5_value |= 1
         self.ctrl_reg5_xm.set(ctrl_reg5_value)
-        # CTRL_REG6
-        # ctrl_reg6_value = 0
-        # self.ctrl_reg6_xm.set(ctrl_reg6_value)
-        # CTRL_REG7
-        # ctrl_reg7_value = 0
-        # self.ctrl_reg7_xm.set(ctrl_reg7_value)
 
-    def setup_gyroscope(self):
-        pass
+        # CTRL_REG6
+        ctrl_reg6_value = 0
+        full_scales = {2: 0b00 << 5,
+                       4: 0b01 << 5,
+                       8: 0b10 << 5,
+                       12: 0b11 << 5}
+        if full_scale in full_scales:
+            ctrl_reg6_value |= full_scales[full_scale]
+            self._magnetometer_full_scale = full_scale
+        self.ctrl_reg6_xm.set(ctrl_reg6_value)
+
+        # CTRL_REG7
+        ctrl_reg7_value = 0
+        if low_power:
+            ctrl_reg7_value |= 1 << 2
+        sensor_modes = {'continious': 0b00,
+                        'single': 0b01,
+                        'powerdown': 0b10}
+        if sensor_mode in sensor_modes:
+            ctrl_reg7_value |= sensor_modes[sensor_mode]
+        # do not disturb other half of CTRL_REG7
+        ctrl_reg7_value |= self.ctrl_reg7_xm.get() & 0xF8
+        self.ctrl_reg7_xm.set(ctrl_reg7_value)
+
+    def setup_gyroscope(self,
+                        data_rate=95,
+                        cutoff_selection=0,
+                        power_down=False,
+                        x_enable=True,
+                        y_enable=True,
+                        z_enable=True,
+                        high_pass_filter_mode='normalreset',
+                        high_pass_filter_cutoff_selection=0,
+                        continious_update=True,
+                        big_endian=False,
+                        full_scale=245,
+                        self_test_mode='normal',
+                        reboot_memory_content=False,
+                        fifo_enable=False,
+                        high_pass_filter_enable=False,
+                        int1_selection=0,
+                        out_selection=0):
+        # CTRL_REG1
+        ctrl_reg1_value = 0
+        data_rates = {95: 0b00 << 6,
+                      190: 0b01 << 6,
+                      380: 0b10 << 6,
+                      760: 0b11 << 6}
+        if data_rate in data_rates:
+            ctrl_reg1_value |= data_rates[data_rate]
+        if cutoff_selection in range(4):
+            ctrl_reg1_value |= cutoff_selection << 4
+        if not power_down:
+            ctrl_reg1_value |= 1 << 3
+        if z_enable:
+            ctrl_reg1_value |= 1 << 2
+        if y_enable:
+            ctrl_reg1_value |= 1 << 1
+        if x_enable:
+            ctrl_reg1_value |= 1
+        self.ctrl_reg1_g.set(ctrl_reg1_value)
+
+        # CTRL_REG2
+        ctrl_reg2_value = 0
+        high_pass_filter_modes = {'normalreset': 0b00 << 4,
+                                  'reference': 0b01 << 4,
+                                  'normal': 0b10 << 4,
+                                  'autoreset': 0b11 << 4}
+        if high_pass_filter_mode in high_pass_filter_modes:
+            ctrl_reg2_value |= high_pass_filter_modes[high_pass_filter_mode]
+        if high_pass_filter_cutoff_selection in range(10):
+            ctrl_reg2_value |= high_pass_filter_cutoff_selection
+        self.ctrl_reg2_g.set(ctrl_reg2_value)
+
+        # CTRL_REG3 (interrupt stuff)
+        ctrl_reg3_value = 0
+        self.ctrl_reg3_g.set(ctrl_reg3_value)
+
+        # CTRL_REG4
+        ctrl_reg4_value = 0
+        if not continious_update:
+            ctrl_reg4_value |= 1 << 7
+        if big_endian:
+            ctrl_reg4_value |= 1 << 6
+        full_scales = {245: 0b00 << 4,
+                       500: 0b01 << 4,
+                       2000: 0b10 << 4}
+        if full_scale in full_scales:
+            ctrl_reg4_value |= full_scales[full_scale]
+            self._gyroscope_full_scale = full_scale
+        self_test_modes = {'normal': 0b00 << 1,
+                           'selftest0': 0b01 << 1,
+                           'selftest1': 0b11 << 1}
+        if self_test_mode in self_test_modes:
+            ctrl_reg4_value |= self_test_modes[self_test_mode]
+        # SPI mode (bit 0) is obviously disabled since this is an I2C module
+        self.ctrl_reg4_g.set(ctrl_reg4_value)
+
+        # CTRL_REG5
+        ctrl_reg5_value = 0
+        if reboot_memory_content:
+            ctrl_reg5_value |= 1 << 7
+        if fifo_enable:
+            ctrl_reg5_value |= 1 << 6
+        if high_pass_filter_enable:
+            ctrl_reg5_value |= 1 << 4
+        if int1_selection in range(4):
+            ctrl_reg5_value |= int1_selection << 2
+        if out_selection in range(4):
+            ctrl_reg5_value |= out_selection
+        self.ctrl_reg5_g.set(ctrl_reg5_value)
+
+        ctrlregs = self.ctrl_reg1_g.get_bulk(5)
+        for i in range(5):
+            print("CTRL_REG{}_G: {}".format(i+1, hex(ctrlregs[i])))
+
+    def _get_twos_complement_xyz(self, register):
+        xlo, xhi, ylo, yhi, zlo, zhi = register.get_bulk(6)
+        v = {'x': xhi << 8 | xlo, 'y': yhi << 8 | ylo, 'z': zhi << 8 | zlo}
+        return {axis: twos_complement(magnitude, 16)
+                for axis, magnitude in v.items()}
+
+    def _scale(self, magnitude, scale):
+        return magnitude / 2**15 * scale
 
     def get_accelerometer(self, raw=False):
-        xlo, xhi, ylo, yhi, zlo, zhi = self.out_x_l_a.get_bulk(6)
-        a = {'x': xhi << 8 | xlo,
-             'y': yhi << 8 | ylo,
-             'z': zhi << 8 | zlo}
-        acceleration_vector = {axis: twos_complement(magnitude, 16)
-                               for axis, magnitude in a.items()}
+        acceleration_vector = self._get_twos_complement_xyz(self.out_x_l_a)
         if raw:
             return acceleration_vector
         else:
-            scales = [2, 4, 6, 8, 16]
-            scale_index = (self.ctrl_reg2_xm.get() >> 3) & 0b111
-            def scale(m):
-                return m / 2**15 * scales[scale_index]
-            return {axis: scale(magnitude)
+            return {axis: self._scale(magnitude,
+                                      self._accelerometer_full_scale)
                     for axis, magnitude in acceleration_vector.items()}
+
+    def get_magnetometer(self, raw=False):
+        magnetic_vector = self._get_twos_complement_xyz(self.out_x_l_m)
+        if raw:
+            return magnetic_vector
+        else:
+            return {axis: self._scale(magnitude, self._magnetometer_full_scale)
+                    for axis, magnitude in magnetic_vector.items()}
+
+    def get_gyroscope(self, raw=False):
+        gyro_vector = self._get_twos_complement_xyz(self.out_x_l_g)
+        if raw:
+            return gyro_vector
+        else:
+            return {axis: self._scale(magnitude, self._gyroscope_full_scale)
+                    for axis, magnitude in gyro_vector.items()}
 
 
 class LSM9DS0Register(object):
