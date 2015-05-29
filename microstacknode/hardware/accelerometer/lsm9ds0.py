@@ -1,12 +1,12 @@
 import sys
 import time
+import select
+import microstackcommon.gpio
 from microstackcommon.i2c import I2CMaster, writing_bytes, writing, reading
 
 
 DEFAULT_I2C_BUS = 1
 
-# CTRL_REG1_XM
-TEMP_EN = 0x80
 
 class LSM9DS0RegisterReadOnlyError(Exception):
     pass
@@ -107,10 +107,27 @@ class LSM9DS0(I2CMaster):
         self.act_ths = LSM9DS0Register(0x3E, self.XM_I2C_ADDR, self)
         self.act_dur = LSM9DS0Register(0x3F, self.XM_I2C_ADDR, self)
 
-    def __enter__(self):
-        self = super().__enter__()
+        self.int_xm_pin = microstackcommon.gpio.Pin(
+            27,
+            direction=microstackcommon.gpio.IN,
+            interrupt=microstackcommon.gpio.FALLING)
+        self.int_xm_pin_epoll = select.epoll()
+
+        self.int_g_pin = microstackcommon.gpio.Pin(
+            23,
+            direction=microstackcommon.gpio.IN,
+            interrupt=microstackcommon.gpio.FALLING)
+        self.int_g_pin_epoll = select.epoll()
+
+    def open(self):
+        super().open()
         self.verify_whoami()
-        return self
+        # interrupts TODO do this in the set method for each thing
+        # self.int_xm_pin.open()
+        # self.int_xm_pin_epoll.register(self.int_xm_pin,
+        #                                select.EPOLLPRI | select.EPOLLET)
+        # # ???
+        # self.int_xm_pin_epoll.poll(timeout=0.001)
 
     def verify_whoami(self):
         assert(self.who_am_i_xm.get() == 0x49)
@@ -145,6 +162,25 @@ class LSM9DS0(I2CMaster):
                             anti_alias_filter_bandwidth=773,
                             full_scale=2,
                             self_test='normal',
+                            interrupt_enable=False,
+                            interrupt_on_all=False,
+                            enable_6d=False,
+                            x_high_interrupt_enable=False,
+                            y_high_interrupt_enable=False,
+                            z_high_interrupt_enable=False,
+                            x_low_interrupt_enable=False,
+                            y_low_interrupt_enable=False,
+                            z_low_interrupt_enable=False,
+                            interrupt_duration=0,
+                            interrupt_threshold=0,
+                            boot_int1_xm_enable=False,
+                            tap_gen_on_int1_xm=False,
+                            intertial_interrupt_gen1_on_int1_xm=False,
+                            intertial_interrupt_gen2_on_int1_xm=False,
+                            accelerometer_data_ready_on_int1_xm=False,
+                            fifo_empty_on_int1_xm=False,
+                            latch_interrupt_request_1=False,
+                            latch_interrupt_request_2=False,
                             high_pass_filter_mode='normalreset',
                             filtered_data_selection=False):
         # CTRL_REG0
@@ -205,6 +241,53 @@ class LSM9DS0(I2CMaster):
             ctrl_reg2_value |= st[self_test]
         self.ctrl_reg2_xm.set(ctrl_reg2_value)
 
+        # CTRL_REG3
+        ctrl_reg3_value = 0
+        if boot_int1_xm_enable:
+            ctrl_reg3_value |= 1 << 7
+        if tap_gen_on_int1_xm:
+            ctrl_reg3_value |= 1 << 6
+        if intertial_interrupt_gen1_on_int1_xm:
+            ctrl_reg3_value |= 1 << 5
+        if intertial_interrupt_gen2_on_int1_xm:
+            ctrl_reg3_value |= 1 << 4
+        if accelerometer_data_ready_on_int1_xm:
+            ctrl_reg3_value |= 1 << 2
+        if fifo_empty_on_int1_xm:
+            ctrl_reg3_value |= 1
+        # do not disturb the magnetometer values
+        ctrl_reg3_value |= self.ctrl_reg3_xm.get() & 0x0A
+        self.ctrl_reg3_xm.set(ctrl_reg3_value)
+
+        # CTRL_REG4
+        # int2_xm config -- not wired in
+        # ctrl_reg4_value = 0
+        # if tap_generator_on_int2_xm:
+        #     ctrl_reg4_value |= 1 << 7
+        # if intertial_interrupt_gen1_on_int2_xm:
+        #     ctrl_reg4_value |= 1 << 6
+        # if intertial_interrupt_gen2_on_int2_xm:
+        #     ctrl_reg4_value |= 1 << 5
+        # if accelerometer_data_ready_on_int2_xm:
+        #     ctrl_reg4_value |= 1 << 3
+        # if fifo_overrun_on_int2_xm:
+        #     ctrl_reg4_value |= 1 << 1
+        # if fifo_watermark_on_int2_xm:
+        #     ctrl_reg4_value |= 1
+        # # do not disturb the magnetometer values
+        # ctrl_reg4_value |= self.ctrl_reg4_xm.get() & 0x14
+        # self.ctrl_reg4_xm.set(ctrl_reg4_value)
+
+        # CTRL_REG5
+        ctrl_reg5_value = 0
+        if latch_interrupt_request_2:
+            ctrl_reg5_value |= 1 << 1
+        if latch_interrupt_request_1:
+            ctrl_reg5_value |= 1
+        # do not disturb the magnetometer values
+        ctrl_reg5_value |= self.ctrl_reg5_xm.get() & 0xFC
+        self.ctrl_reg5_xm.set(ctrl_reg5_value)
+
         # CTRL_REG7
         ctrl_reg7_value = 0
         high_pass_filter_modes = {'normalreset': 0b00 << 6,
@@ -219,6 +302,38 @@ class LSM9DS0(I2CMaster):
         ctrl_reg7_value |= self.ctrl_reg7_xm.get() & 0x1F
         self.ctrl_reg7_xm.set(ctrl_reg7_value)
 
+        if interrupt_enable:
+            int_gen_2_reg_value = 0
+            if interrupt_on_all:
+                int_gen_2_reg_value |= 1 << 7
+            if enable_6d:
+                int_gen_2_reg_value |= 1 << 6
+            if z_high_interrupt_enable:
+                int_gen_2_reg_value |= 1 << 5
+            if z_low_interrupt_enable:
+                int_gen_2_reg_value |= 1 << 4
+            if y_high_interrupt_enable:
+                int_gen_2_reg_value |= 1 << 3
+            if y_low_interrupt_enable:
+                int_gen_2_reg_value |= 1 << 2
+            if x_high_interrupt_enable:
+                int_gen_2_reg_value |= 1 << 1
+            if x_low_interrupt_enable:
+                int_gen_2_reg_value |= 1
+            self.int_gen_2_reg.set(int_gen_2_reg_value)
+
+            self.int_gen_1_duration.set(0x7f & interrupt_duration)
+            interrupt_threshold_raw = int(
+                interrupt_threshold / self._accelerometer_full_scale * 0x7f)
+            self.int_gen_1_ths.set(0x7f & interrupt_threshold_raw)
+
+            if not self.int_xm_pin.closed:
+                self.int_xm_pin.open()
+                self.int_xm_pin_epoll.register(self.int_xm_pin,
+                                               select.EPOLLPRI | select.EPOLLET)
+                # ??? get rid of the first interrupt
+                self.int_xm_pin_epoll.poll(timeout=0.001)
+
     def setup_magnetometer(self,
                            temperature_sensor_enable=True,
                            high_resolution=False,
@@ -227,7 +342,47 @@ class LSM9DS0(I2CMaster):
                            latch_interrupt_request_1=False,
                            full_scale=4,
                            low_power=False,
-                           sensor_mode='single'):
+                           sensor_mode='single',
+                           interrupt_enable=False,
+                           x_interrupt_enable=False,
+                           y_interrupt_enable=False,
+                           z_interrupt_enable=False,
+                           open_drain=False,
+                           interrupt_active_high=False,
+                           latch_interrupt_request=False,
+                           enable_4d=False,
+                           interrupt_threshold=0):
+
+        if interrupt_enable:
+            # INT_CTRL_REG_M
+            int_ctrl_reg_m_value = 0
+            int_ctrl_reg_m_value |= 1 # interrupt enable
+            if x_interrupt_enable:
+                int_ctrl_reg_m_value |= 1 << 7
+            if y_interrupt_enable:
+                int_ctrl_reg_m_value |= 1 << 6
+            if z_interrupt_enable:
+                int_ctrl_reg_m_value |= 1 << 5
+            if open_drain:
+                int_ctrl_reg_m_value |= 1 << 4
+            if interrupt_active_high:
+                int_ctrl_reg_m_value |= 1 << 3
+            if latch_interrupt_request:
+                int_ctrl_reg_m_value |= 1 << 2
+            if enable_4d:
+                int_ctrl_reg_m_value |= 1 << 1
+            self.int_ctrl_reg_m.set(int_ctrl_reg_m_value)
+
+            self.int_ths_h_m.set(0xff & (interrupt_threshold >> 8))
+            self.int_ths_l_m.set(0xff & interrupt_threshold)
+
+            if not self.int_xm_pin.closed:
+                self.int_xm_pin.open()
+                self.int_xm_pin_epoll.register(self.int_xm_pin,
+                                               select.EPOLLPRI | select.EPOLLET)
+                # ??? get rid of the first interrupt
+                self.int_xm_pin_epoll.poll(timeout=0.001)
+
         # CTRL_REG5
         ctrl_reg5_value = 0
         if temperature_sensor_enable:
@@ -288,8 +443,62 @@ class LSM9DS0(I2CMaster):
                         reboot_memory_content=False,
                         fifo_enable=False,
                         high_pass_filter_enable=False,
+                        interrupt_enable=False,
+                        boot_status_available=False,
+                        interrupt_active_low=False,
+                        open_drain=False,
                         int1_selection=0,
-                        out_selection=0):
+                        out_selection=0,
+                        fifo_mode='bypass',
+                        fifo_watermark=0,
+                        interrupt_on_all=False,
+                        latch_interrupt_request=False,
+                        x_high_interrupt_enable=False,
+                        x_low_interrupt_enable=False,
+                        y_high_interrupt_enable=False,
+                        y_low_interrupt_enable=False,
+                        z_high_interrupt_enable=False,
+                        z_low_interrupt_enable=False,
+                        x_interrupt_threshold=0,
+                        y_interrupt_threshold=0,
+                        z_interrupt_threshold=0,
+                        interrupt_duration=0):
+        if interrupt_enable:
+            int1_cfg_g_value = 0
+            if interrupt_on_all:
+                int1_cfg_g_value |= 1 << 7
+            if latch_interrupt_request:
+                int1_cfg_g_value |= 1 << 6
+            if z_high_interrupt_enable:
+                int1_cfg_g_value |= 1 << 5
+            if z_low_interrupt_enable:
+                int1_cfg_g_value |= 1 << 4
+            if y_high_interrupt_enable:
+                int1_cfg_g_value |= 1 << 3
+            if y_low_interrupt_enable:
+                int1_cfg_g_value |= 1 << 2
+            if x_high_interrupt_enable:
+                int1_cfg_g_value |= 1 << 1
+            if x_low_interrupt_enable:
+                int1_cfg_g_value |= 1
+            self.int1_cfg_g.set(int1_cfg_g_value)
+
+            self.int1_tsh_xh_g.set(0xff & (x_interrupt_threshold >> 8))
+            self.int1_tsh_xl_g.set(0xff & x_interrupt_threshold)
+            self.int1_tsh_yh_g.set(0xff & (y_interrupt_threshold >> 8))
+            self.int1_tsh_yl_g.set(0xff & y_interrupt_threshold)
+            self.int1_tsh_zh_g.set(0xff & (z_interrupt_threshold >> 8))
+            self.int1_tsh_zl_g.set(0xff & z_interrupt_threshold)
+
+            if interrupt_duration:
+                self.int1_duration_g.set(0x80 | (0x7f & interrupt_duration))
+
+            self.int_g_pin.open()
+            self.int_g_pin_epoll.register(self.int_g_pin,
+                                          select.EPOLLPRI | select.EPOLLET)
+            # ??? get rid of the first interrupt
+            self.int_g_pin_epoll.poll(timeout=0.001)
+
         # CTRL_REG1
         ctrl_reg1_value = 0
         data_rates = {95: 0b00 << 6,
@@ -322,8 +531,17 @@ class LSM9DS0(I2CMaster):
             ctrl_reg2_value |= high_pass_filter_cutoff_selection
         self.ctrl_reg2_g.set(ctrl_reg2_value)
 
-        # CTRL_REG3 (interrupt stuff)
+        # CTRL_REG3
         ctrl_reg3_value = 0
+        if interrupt_enable:
+            ctrl_reg3_value |= 1 << 7
+        if boot_status_available:
+            ctrl_reg3_value |= 1 << 6
+        if interrupt_active_low:
+            ctrl_reg3_value |= 1 << 5
+        if open_drain:
+            ctrl_reg3_value |= 1 << 4
+        # lower nibble is to do with watermark on DRDY which is not connected.
         self.ctrl_reg3_g.set(ctrl_reg3_value)
 
         # CTRL_REG4
@@ -360,9 +578,22 @@ class LSM9DS0(I2CMaster):
             ctrl_reg5_value |= out_selection
         self.ctrl_reg5_g.set(ctrl_reg5_value)
 
-        ctrlregs = self.ctrl_reg1_g.get_bulk(5)
-        for i in range(5):
-            print("CTRL_REG{}_G: {}".format(i+1, hex(ctrlregs[i])))
+        # DEBUG print out all control registers
+        # ctrlregs = self.ctrl_reg1_g.get_bulk(5)
+        # for i in range(5):
+        #     print("CTRL_REG{}_G: {}".format(i+1, hex(ctrlregs[i])))
+
+        fifo_ctrl_reg_g_value = 0
+        fifo_modes = {'bypass': 0b000 << 5,
+                      'fifo': 0b001 << 5,
+                      'stream': 0b010 << 5,
+                      'streamtofifo': 0b011 << 5,
+                      'bypasstostream': 0b100 << 5}
+        if fifo_mode in fifo_modes:
+            fifo_ctrl_reg_g_value |= fifo_modes[fifo_mode]
+        if fifo_watermark in range(32):
+            fifo_ctrl_reg_g_value |= fifo_watermark
+        self.fifo_ctrl_reg_g.set(fifo_ctrl_reg_g_value)
 
     def _get_twos_complement_xyz(self, register):
         xlo, xhi, ylo, yhi, zlo, zhi = register.get_bulk(6)
@@ -397,6 +628,61 @@ class LSM9DS0(I2CMaster):
         else:
             return {axis: self._scale(magnitude, self._gyroscope_full_scale)
                     for axis, magnitude in gyro_vector.items()}
+
+    def wait_for_gyroscope_interrupt(self, timeout=None):
+        while True:
+            if timeout is not None:
+                events = self.int_g_pin_epoll.poll(timeout)
+            else:
+                events = self.int_g_pin_epoll.poll()
+
+            for fileno, event in events:
+                if fileno == self.int_g_pin.fileno():
+                    int_src = self.int1_src_g.get()
+                    return {'active': (1 & (int_src >> 6)) == 1,
+                            'z_high': (1 & (int_src >> 5)) == 1,
+                            'z_low': (1 & (int_src >> 4)) == 1,
+                            'y_high': (1 & (int_src >> 3)) == 1,
+                            'y_low': (1 & (int_src >> 2)) == 1,
+                            'x_high': (1 & (int_src >> 1)) == 1,
+                            'x_low': (1 & int_src) == 1}
+
+    def wait_for_accelerometer_interrupt(self, timeout=None):
+        while True:
+            if timeout is not None:
+                events = self.int_xm_pin_epoll.poll(timeout)
+            else:
+                events = self.int_xm_pin_epoll.poll()
+
+            for fileno, event in events:
+                if fileno == self.int_xm_pin.fileno():
+                    int_src = self.int_gen_1_src.get()
+                    return {'active': (1 & (int_src >> 6)) == 1,
+                            'z_high': (1 & (int_src >> 5)) == 1,
+                            'z_low': (1 & (int_src >> 4)) == 1,
+                            'y_high': (1 & (int_src >> 3)) == 1,
+                            'y_low': (1 & (int_src >> 2)) == 1,
+                            'x_high': (1 & (int_src >> 1)) == 1,
+                            'x_low': (1 & int_src) == 1}
+
+    def wait_for_magnetometer_interrupt(self, timeout=None):
+        while True:
+            if timeout is not None:
+                events = self.int_xm_pin_epoll.poll(timeout)
+            else:
+                events = self.int_xm_pin_epoll.poll()
+
+            for fileno, event in events:
+                if fileno == self.int_xm_pin.fileno():
+                    int_src = self.int_src_reg_m.get()
+                    return {'x_positive': (1 & (int_src >> 7)) == 1,
+                            'y_positive': (1 & (int_src >> 6)) == 1,
+                            'z_positive': (1 & (int_src >> 5)) == 1,
+                            'x_negative': (1 & (int_src >> 4)) == 1,
+                            'y_negative': (1 & (int_src >> 3)) == 1,
+                            'z_negative': (1 & (int_src >> 2)) == 1,
+                            'range_overflow': (1 & (int_src >> 1)) == 1,
+                            'active': (1 & int_src) == 1}
 
 
 class LSM9DS0Register(object):
