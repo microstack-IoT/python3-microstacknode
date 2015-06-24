@@ -37,33 +37,37 @@ CMD_SET_COM_PINS_HARDWARE_CONFIGURATION = 0xDA
 CMD_SET_VCOMH_DESELECT_LEVEL = 0xDB
 
 
-class SSD1306(object):
+class SSD1306(I2CMaster):
     """SSD1306 128x64 dot matrix OLED."""
 
-    def __init__(self, i2c_bus=DEFAULT_I2C_BUS):
-        self.i2c_master = I2CMaster(i2c_bus)
-        self._clear_buffer()
+    # def __init__(self, i2c_bus=DEFAULT_I2C_BUS):
+        # self.i2c_master = I2CMaster(i2c_bus)
+        # self._clear_buffer()
 
-    def __enter__(self):
+    # def __enter__(self):
+    #     self.init()
+    #     return self
+
+    # def __exit__(self, type, value, traceback):
+    #     self.close()
+
+    def open(self):
+        super().open()
         self.init()
-        return self
-
-    def __exit__(self, type, value, traceback):
-        self.close()
 
     def _send_command(self, *cmd):
         # co = 0
         # dc = 0
         # control = (co << 7) | (dc << 6)
         control = 0x00
-        self.i2c_master.transaction(writing_bytes(I2C_ADDR, control, *cmd))
+        self.transaction(writing_bytes(I2C_ADDR, control, *cmd))
 
     def _send_data(self, *cmd):
         # co = 0
         # dc = 1
         # control = (co << 7) | (dc << 6)
         control = 0x40
-        self.i2c_master.transaction(writing_bytes(I2C_ADDR, control, *cmd))
+        self.transaction(writing_bytes(I2C_ADDR, control, *cmd))
 
     def _clear_buffer(self):
         # Buffer is one dimensional becasue we can send the whole thing
@@ -269,7 +273,8 @@ class SSD1306(object):
         :param clear_display: Clear the screen after initialisation (default: True)
         :type clear_display: boolean
         """
-        self.i2c_master.open()
+        # self.open()
+        self._clear_buffer()
         self.set_display_off()
         self.set_display_clock_divide_ratio(0x80)
         self.set_multiplex_ratio(0x0F)
@@ -289,8 +294,8 @@ class SSD1306(object):
             self.clear_display()
         self.set_display_on()
 
-    def close(self):
-        self.i2c_master.close()
+    # def close(self):
+    #     self.close()
 
     def update_display(self):
         self.set_col_address(0x00, WIDTH-1)

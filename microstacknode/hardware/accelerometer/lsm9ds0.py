@@ -134,7 +134,7 @@ class LSM9DS0(I2CMaster):
         assert(self.who_am_i_g.get() == 0xD4)
 
     def enable_temperature(self):
-        self.ctrl_reg5_xm.set(self.ctrl_reg5_xm.get() | TEMP_EN)
+        self.ctrl_reg5_xm.set(self.ctrl_reg5_xm.get() | 0x80)
 
     def get_temperature(self):
         t_low, t_high = self.out_temp_l_xm.get_bulk(2)
