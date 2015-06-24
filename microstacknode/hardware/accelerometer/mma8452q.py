@@ -79,11 +79,7 @@ XYZ_DATA_CFG_FSR_4G = 0x01
 XYZ_DATA_CFG_FSR_8G = 0x02
 
 
-class ForceRangeNotAvailable(Exception):
-    pass
-
-
-class MMA8452Q(object):
+class MMA8452Q(I2CMaster):
     """Freescale MMA8452Q accelerometer.
 
     http://www.freescale.com/files/sensors/doc/data_sheet/MMA8452Q.pdf
@@ -97,6 +93,9 @@ class MMA8452Q(object):
     # the XYZ registers are in the first few and we can access them using a
     # multi-read.
 
+    # One might be inclined to multi-read the whole register bank however the
+    # auto increment resets to 0x00 shortly after the XYZ registers.
+
     # Maybe we can get it working though. Try getting python-smbus working
     # with Python 3
     # http://www.spinics.net/lists/linux-i2c/msg08427.html
@@ -109,83 +108,75 @@ class MMA8452Q(object):
     def __init__(self,
                  i2c_bus=DEFAULT_I2C_BUS,
                  i2c_address=DEFAULT_I2C_ADDRESS):
-        self.i2c_master = I2CMaster(i2c_bus)
+        super().__init__(i2c_bus)
         self.i2c_address = i2c_address
+        self.xyz_data_cfg = MMA8452QRegister(XYZ_DATA_CFG,
+                                             self.i2c_address,
+                                             self)
+        self.ctrl_reg1 = MMA8452QRegister(CTRL_REG1, self.i2c_address, self)
+        # have to store some registers locally since we can't read
+        self._xyz_data_cfg_value = 0
+        self._ctrl_reg1_value = 0
 
-        self.int_source = MMA8452QRegister(INT_SOURCE, self)
-        self.xyz_data_cfg = MMA8452QRegister(XYZ_DATA_CFG, self)
-        self.ctrl_reg1 = MMA8452QRegister(CTRL_REG1, self)
-        self.off_x = MMA8452QRegister(OFF_X, self)
-        self.off_y = MMA8452QRegister(OFF_Y, self)
-        self.off_z = MMA8452QRegister(OFF_Z, self)
-        # need to finish adding registers...
-
-    def init(self):
-        self.i2c_master.open()
+    def open(self):
+        super().open()
         self.standby()
-        self.ctrl_reg1.value = CTRL_REG1_ODR_800  # set sample rate 800Hz
-        self.set_g_range(2)  # +0.5 == 1G
+        self.set_output_data_rate(800)  # Hz
+        self.set_g_range(2)
         self.activate()
 
-    def close(self):
-        self.i2c_master.close()
-
-    def __enter__(self):
-        self.init()
-        return self
-
-    def __exit__(self):
-        self.close()
-
     def reset(self):
-        self.ctrl_reg1.value = 0
+        self._ctrl_reg1_value = 0
+        self.ctrl_reg1.set(self._ctrl_reg1_value)
 
     def activate(self):
-        self.ctrl_reg1.value |= CTRL_REG1_SET_ACTIVE
+        self._ctrl_reg1_value |= CTRL_REG1_SET_ACTIVE
+        self.ctrl_reg1.set(self._ctrl_reg1_value)
 
     def standby(self):
-        self.ctrl_reg1.value &= 0xff ^ CTRL_REG1_SET_ACTIVE
+        self._ctrl_reg1_value &= 0xff ^ CTRL_REG1_SET_ACTIVE
+        self.ctrl_reg1.set(self._ctrl_reg1_value)
 
     def get_xyz(self, raw=False, res12=True):
         """Returns the values of the XYZ registers. By default it returns
         signed values at 12-bit resolution. You can specify a lower resolution
         (8-bit) or request the raw register values. Signed values are
-        between the range -1 to +1 which are relative to the configured
-        Full Scale Range (FSR).
-
-        Since we can't read arbitary registers from this chip over I2C
-        (because there is no decent SMBus implementation, in Python 3 at
-        least) we have to just read the first 7 registers and pull the
-        XYZ data from that.
-
-        Notes:
-
-        - 12-bit resolution from OUT MSB and OUT LSB registers:
-
-            +--------+-----------------+
-            | msb    | lsb             |
-            +--------+--------+--------+
-            | 8 bits | 4 bits | 4 bits |
-            +--------+--------+--------+
-            | value (12 bits) | unused |
-            +--------+--------+--------+
-
-        - 8-bit resolution just from OUT MSB:
-
-            +--------+--------+
-            | msb    | lsb    |
-            +--------+--------+
-            | 8 bits | 8 bits |
-            +--------+--------+
-            | value  | unused |
-            +--------+--------+
+        in G's. You can alter the recording range with `set_g_range()`.
 
         :param raw: If True: return raw, unsigned data, else: sign values
         :type raw: boolean (default: False)
         :param res12: If True: read 12-bit resolution, else: 8-bit
         :type res12: boolean (default: True)
         """
-        buf = self.i2c_master.transaction(reading(self.i2c_address, 7))[0]
+        # Since we can't read arbitary registers from this chip over I2C
+        # (because there is no decent SMBus implementation, in Python 3 at
+        # least) we have to just read the first 7 registers and pull the
+        # XYZ data from that.
+
+        # Notes:
+
+        # - 12-bit resolution from OUT MSB and OUT LSB registers:
+
+        #     +--------+-----------------+
+        #     | msb    | lsb             |
+        #     +--------+--------+--------+
+        #     | 8 bits | 4 bits | 4 bits |
+        #     +--------+--------+--------+
+        #     | value (12 bits) | unused |
+        #     +--------+--------+--------+
+
+        # - 8-bit resolution just from OUT MSB:
+
+        #     +--------+--------+
+        #     | msb    | lsb    |
+        #     +--------+--------+
+        #     | 8 bits | 8 bits |
+        #     +--------+--------+
+        #     | value  | unused |
+        #     +--------+--------+
+
+        # bulk read works
+        buf = self.transaction(reading(self.i2c_address, 7))[0]
         # status = buf[0]
         if res12:
             x = (buf[1] << 4) | (buf[2] >> 4)
@@ -195,24 +186,32 @@ class MMA8452Q(object):
             x, y, z = buf[1], buf[3], buf[5]
 
         if not raw:
-            fsr = self.xyz_data_cfg.value & 0x03  # get range
-            if fsr == XYZ_DATA_CFG_FSR_2G:
-                g_range = 2
-            elif fsr == XYZ_DATA_CFG_FSR_4G:
-                g_range = 4
-            elif fsr == XYZ_DATA_CFG_FSR_8G:
-                g_range = 8
-
+            # get range
+            fsr = self._xyz_data_cfg_value & 0x03
+            g_ranges = {XYZ_DATA_CFG_FSR_2G: 2,
+                        XYZ_DATA_CFG_FSR_4G: 4,
+                        XYZ_DATA_CFG_FSR_8G: 8}
+            g_range = g_ranges[fsr]
             resolution = 12 if res12 else 8
-            gmul = g_range / (2 ** resolution)
+            gmul = g_range / (2 ** (resolution - 1))
             x = twos_complement(x, resolution) * gmul
             y = twos_complement(y, resolution) * gmul
             z = twos_complement(z, resolution) * gmul
 
         return x, y, z
 
+    def get_xyz_ms2(self):
+        """Returns the x, y, z values in SI units (m/s^2)."""
+        standard_gravity = 9.80665
+        x, y, z = map(lambda v: v * standard_gravity,
+                      self.get_xyz(raw=False, res12=True))
+        return x, y, z
+
     def set_g_range(self, g_range):
         """Sets the force range (in Gs -- where 1G is the force of gravity).
+
+        Be sure to call `standby()` before using this method and `activate()`
+        after using this method.
 
         :param g_range: The force range in Gs.
         :type g_range: int (acceptable ranges: 2, 4 or 8)
@@ -220,42 +219,49 @@ class MMA8452Q(object):
         g_ranges = {2: XYZ_DATA_CFG_FSR_2G,
                     4: XYZ_DATA_CFG_FSR_4G,
                     8: XYZ_DATA_CFG_FSR_8G}
-        if g_range not in g_ranges:
-            raise ForceRangeNotAvailable(
-                "{} is not in {}".format(g_range, g_ranges))
-        else:
-            self.xyz_data_cfg.value = g_ranges[g_range]
+        if g_range in g_ranges:
+            self._xyz_data_cfg_value &= 0b11111100
+            self._xyz_data_cfg_value |= g_ranges[g_range]
+            self.xyz_data_cfg.set(self._xyz_data_cfg_value)
+
+    def set_output_data_rate(self, output_data_rate):
+        """Sets the output data rate in Hz.
+
+        Be sure to call `standby()` before using this method and `activate()`
+        after using this method.
+
+        :param output_data_rate: The output data rate.
+        :type output_data_rate: int (acceptable rates: 800, 400, 200, 100,
+                                50, 12.5, 6.25, 1.56)
+        """
+        output_data_rates = {800: CTRL_REG1_ODR_800,
+                             400: CTRL_REG1_ODR_400,
+                             200: CTRL_REG1_ODR_200,
+                             100: CTRL_REG1_ODR_100,
+                             50: CTRL_REG1_ODR_50,
+                             12.5: CTRL_REG1_ODR_12_5,
+                             6.25: CTRL_REG1_ODR_6_25,
+                             1.56: CTRL_REG1_ODR_1_56}
+        if output_data_rate in output_data_rates:
+            self._ctrl_reg1_value &= 0b11100111
+            self._ctrl_reg1_value |= output_data_rates[output_data_rate]
+            self.ctrl_reg1.set(self._ctrl_reg1_value)
 
 
 class MMA8452QRegister(object):
     """An 8 bit register inside an MMA8452Q. Since the native I2C driver
-    does not support multiple starts (SMBus) we cannot fully implement
-    register reads. Therefore the register value is stored locally.
+    does not support multiple starts (SMBus) we cannot implement register
+    reads.
     """
-    def __init__(self, address, chip):
-        self._value = 0
-        self.address = address
-        self.chip = chip
 
-    @property
-    def value(self):
-        return self._value
+    def __init__(self, register_address, device_address, i2c_master):
+        self.register_address = register_address
+        self.device_address = device_address
+        self.i2c_master = i2c_master
 
-    @value.setter
-    def value(self, v):
-        self.chip.i2c_master.transaction(writing_bytes(self.chip.i2c_address,
-                                                       self.address,
-                                                       v))
-        self._value = v
-
-    def all_high(self):
-        self.value = 0xff
-
-    def all_low(self):
-        self.value = 0
-
-    def toggle(self):
-        self.value = 0xff ^ self.value
+    def set(self, v):
+        self.i2c_master.transaction(
+            writing_bytes(self.device_address, self.register_address, v))
 
 
 def twos_complement(value, bits):
