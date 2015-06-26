@@ -1,12 +1,13 @@
 # http://www.gsm-rainbow.ru/sites/default/files/
 # l80_gps_protocol_specification_v1.0.pdf
-import threading
-import subprocess
-import logging
+import io
+import sys
 import time
 import serial
-import io
+import logging
 import datetime
+import threading
+import subprocess
 # logging.basicConfig(level=logging.DEBUG)
 
 
@@ -50,8 +51,51 @@ class L80GPS(object):
                                           timeout=0.5,
                                           rtscts=0)
 
+    ####################################################################
+    # REMOVE PROPERTIES
+    ####################################################################
+    def _property_depricated_warning(self, p):
+        print('WARNING: properties will be removed in next major version. '
+              'Use `l80gps.get_{}()` instead of `l80gps.{}`'.format(p),
+              file=sys.stderr)
+
     @property
     def gprmc(self):
+        self._property_depricated_warning('gprmc')
+        return self.get_gprmc()
+
+    @property
+    def gpvtg(self):
+        self._property_depricated_warning('gpvtg')
+        return self.get_gpvtg()
+
+    @property
+    def gpgga(self):
+        self._property_depricated_warning('gpgga')
+        return self.get_gpgga()
+
+    @property
+    def gpgsa(self):
+        self._property_depricated_warning('gpgsa')
+        return self.get_gpgsa()
+
+    @property
+    def gpgsv(self):
+        self._property_depricated_warning('gpgsv')
+        return self.get_gpgsv()
+
+    @property
+    def gpgll(self):
+        self._property_depricated_warning('gpgll')
+        return self.get_gpgll()
+
+    @property
+    def gptxt(self):
+        self._property_depricated_warning('gptxt')
+        return self.get_gptxt()
+    ####################################################################
+
+    def get_gprmc(self):
         """Returns the latest GPRMC message.
 
         :rasies: DataInvalidError
@@ -63,36 +107,31 @@ class L80GPS(object):
         else:
             raise DataInvalidError("Indicated by data_valid field.")
 
-    @property
-    def gpvtg(self):
+    def get_gpvtg(self):
         """Returns the latest GPVTG message."""
         pkt = self.get_nmea_pkt('GPVTG')
         gpvtg_dict, checksum = gpvtg_as_dict(pkt)
         return gpvtg_dict
 
-    @property
-    def gpgga(self):
+    def get_gpgga(self):
         """Returns the latest GPGGA message."""
         pkt = self.get_nmea_pkt('GPGGA')
         gpgga_dict, checksum = gpgga_as_dict(pkt)
         return gpgga_dict
 
-    @property
-    def gpgsa(self):
+    def get_gpgsa(self):
         """Returns the latest GPGSA message."""
         pkt = self.get_nmea_pkt('GPGSA')
         gpgsa_dict, checksum = gpgsa_as_dict(pkt)
         return gpgsa_dict
 
-    @property
-    def gpgsv(self):
+    def get_gpgsv(self):
         """Returns the latest GPGSV message."""
         pkt = self.get_nmea_pkt('GPGSV')
         gpgsv_dict, checksum = gpgsv_as_dict(pkt)
         return gpgsv_dict
 
-    @property
-    def gpgll(self):
+    def get_gpgll(self):
         """Returns the latest GPGLL message.
 
         :rasies: DataInvalidError
@@ -104,8 +143,7 @@ class L80GPS(object):
         else:
             raise DataInvalidError("Indicated by data_valid field.")
 
-    @property
-    def gptxt(self):
+    def get_gptxt(self):
         """Returns the latest GPTXT message."""
         pkt = self.get_nmea_pkt('GPTXT')
         gptxt_dict, checksum = gptxt_as_dict(pkt)

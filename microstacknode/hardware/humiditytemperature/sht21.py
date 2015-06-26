@@ -9,17 +9,8 @@ class ChecksumFailedError(Exception):
     pass
 
 
-class SHT21:
-    """Class to read temperature and humidity from SHT21. Much of this
-    class was derived from:
-
-       - https://github.com/jaques/sht21_python/blob/master/sht21.py
-       - Martin Steppuhn's code from http://www.emsystech.de/raspi-sht21
-       - http://www.sensirion.com/fileadmin/user_upload/customers/
-         sensirion/Dokumente/Humidity/
-         Sensirion_Humidity_SHT21_Datasheet_V3.pdf
-
-    """
+class SHT21(I2CMaster):
+    """SHT21 temperature and humidity sensor."""
 
     _I2C_ADDRESS = 0x40
 
@@ -29,61 +20,45 @@ class SHT21:
     _CMD_HUMIDITY_NO_HOLD = 0xF5
 
     def __init__(self, i2c_bus=DEFAULT_I2C_BUS):
-        """Opens the i2c device (assuming that the kernel modules have been
-        loaded).  Note that this has only been tested on first revision
-        raspberry pi where the device_number = 0, but it should work
-        where device_number=1"""
-        self.i2c_master = I2CMaster(i2c_bus)
+        super().__init__(i2c_bus)
 
-    def init(self):
-        self.i2c_master.open()
-        self.i2c_master.transaction(
-            writing_bytes(self._I2C_ADDRESS,
-                          self._CMD_SOFTRESET))
+    def __enter__(self):
+        self = super().__enter__()
+        self.reset()
+        return self
+
+    def reset(self):
+        """Resets the SHT12."""
+        self.transaction(
+            writing_bytes(self._I2C_ADDRESS, self._CMD_SOFTRESET))
         time.sleep(0.050)
 
     def get_temperature(self):
         """Reads the temperature from the sensor. This call blocks
         for 250ms to allow the sensor to return the data.
         """
-        self.i2c_master.transaction(
+        self.transaction(
             writing_bytes(self._I2C_ADDRESS,
                           self._CMD_TEMPERATURE_NO_HOLD))
         time.sleep(0.250)
-        data = self.i2c_master.transaction(reading(self._I2C_ADDRESS, 3))[0]
+        data = self.transaction(reading(self._I2C_ADDRESS, 3))[0]
         if _calculate_checksum(data, 2) != data[2]:
             raise ChecksumFailedError("Temperature checksum failed.")
         else:
             return _get_temperature_from_buffer(data)
 
-
     def get_humidity(self):
-        """Reads the humidity from the sensor.  Not that this call blocks
-    for 250ms to allow the sensor to return the data"""
-        self.i2c_master.transaction(
+        """Reads the humidity from the sensor. This call blocks
+        for 250ms to allow the sensor to return the data"""
+        self.transaction(
             writing_bytes(self._I2C_ADDRESS,
                           self._CMD_HUMIDITY_NO_HOLD))
         time.sleep(0.250)
-        data = self.i2c_master.transaction(reading(self._I2C_ADDRESS, 3))[0]
+        data = self.transaction(reading(self._I2C_ADDRESS, 3))[0]
         if _calculate_checksum(data, 2) != data[2]:
             raise ChecksumFailedError("Humidity checksum failed.")
         else:
             return _get_humidity_from_buffer(data)
-
-    def close(self):
-        """Closes the i2c connection"""
-        self.i2c_master.close()
-
-
-    def __enter__(self):
-        """`with` statement support"""
-        self.init()
-        return self
-
-
-    def __exit__(self, type, value, traceback):
-        """`with` statement support"""
-        self.close()
 
 
 def _calculate_checksum(data, nbrOfBytes):

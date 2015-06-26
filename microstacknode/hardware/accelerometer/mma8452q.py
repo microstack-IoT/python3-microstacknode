@@ -79,6 +79,9 @@ XYZ_DATA_CFG_FSR_4G = 0x01
 XYZ_DATA_CFG_FSR_8G = 0x02
 
 
+STANDARD_GRAVITY = 9.80665
+
+
 class MMA8452Q(I2CMaster):
     """Freescale MMA8452Q accelerometer.
 
@@ -118,27 +121,39 @@ class MMA8452Q(I2CMaster):
         self._xyz_data_cfg_value = 0
         self._ctrl_reg1_value = 0
 
-    def open(self):
-        super().open()
+    def __enter__(self):
+        self = super().__enter__()
+        self.init()
+        return self
+
+    def init(self):
+        """Initalises the accelerometer with some default values."""
         self.standby()
         self.set_output_data_rate(800)  # Hz
         self.set_g_range(2)
         self.activate()
 
     def reset(self):
+        """Resets the accelerometer."""
         self._ctrl_reg1_value = 0
         self.ctrl_reg1.set(self._ctrl_reg1_value)
 
     def activate(self):
+        """Start recording the accelerometer values. Call this after
+        changing any settings.
+        """
         self._ctrl_reg1_value |= CTRL_REG1_SET_ACTIVE
         self.ctrl_reg1.set(self._ctrl_reg1_value)
 
     def standby(self):
+        """Stop recording the accelerometer values. Call this before
+        changing any settings.
+        """
         self._ctrl_reg1_value &= 0xff ^ CTRL_REG1_SET_ACTIVE
         self.ctrl_reg1.set(self._ctrl_reg1_value)
 
     def get_xyz(self, raw=False, res12=True):
-        """Returns the values of the XYZ registers. By default it returns
+        """Returns the x, y and z values as a dictionary. By default it returns
         signed values at 12-bit resolution. You can specify a lower resolution
         (8-bit) or request the raw register values. Signed values are
         in G's. You can alter the recording range with `set_g_range()`.
@@ -198,14 +213,14 @@ class MMA8452Q(I2CMaster):
             y = twos_complement(y, resolution) * gmul
             z = twos_complement(z, resolution) * gmul
 
-        return x, y, z
+        return {'x': x, 'y': y, 'z': z}
 
     def get_xyz_ms2(self):
-        """Returns the x, y, z values in SI units (m/s^2)."""
-        standard_gravity = 9.80665
-        x, y, z = map(lambda v: v * standard_gravity,
-                      self.get_xyz(raw=False, res12=True))
-        return x, y, z
+        """Returns the x, y, z values as a dictionary in SI units (m/s^2)."""
+        xyz = self.get_xyz(raw=False, res12=True)
+        # multiply each xyz value by the standard gravity value
+        return {direction: magnitude * STANDARD_GRAVITY
+                for direction, magnitude in xyz.items()}
 
     def set_g_range(self, g_range):
         """Sets the force range (in Gs -- where 1G is the force of gravity).

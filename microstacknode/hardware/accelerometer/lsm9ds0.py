@@ -119,8 +119,8 @@ class LSM9DS0(I2CMaster):
             interrupt=microstackcommon.gpio.FALLING)
         self.int_g_pin_epoll = select.epoll()
 
-    def open(self):
-        super().open()
+    def __enter__(self):
+        self = super().__enter__()
         self.verify_whoami()
         # interrupts TODO do this in the set method for each thing
         # self.int_xm_pin.open()
@@ -128,6 +128,7 @@ class LSM9DS0(I2CMaster):
         #                                select.EPOLLPRI | select.EPOLLET)
         # # ???
         # self.int_xm_pin_epoll.poll(timeout=0.001)
+        return self
 
     def verify_whoami(self):
         assert(self.who_am_i_xm.get() == 0x49)

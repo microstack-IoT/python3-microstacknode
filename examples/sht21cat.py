@@ -4,7 +4,7 @@ from microstacknode.hardware.humiditytemperature.sht21 import SHT21
 
 
 if __name__ == '__main__':
-    with SHT21(1) as htsensor:
+    with SHT21() as htsensor:
         while True:
             humidity = htsensor.get_humidity()
             temperature = htsensor.get_temperature()
