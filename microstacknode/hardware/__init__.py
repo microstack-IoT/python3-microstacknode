@@ -29,7 +29,7 @@ class MicrostackL80GPS(L80GPS, MicrostackPeripheral):
         try:
             super().__init__(device)
         except serial.serialutil.SerialException as e:
-          raise InitError(str(e)) from e
+          raise InitError(str(e))
 
 
 class MicrostackHardwareManager(object):

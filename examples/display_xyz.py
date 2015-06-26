@@ -4,7 +4,7 @@ import datetime
 from microstacknode.hardware.display.ssd1306 import SSD1306
 from microstacknode.hardware.accelerometer.mma8452q import MMA8452Q
 from microstacknode.hardware.display.font import (FourByFiveFont,
-                                                  MinecraftiaFont)
+                                                  BlockFont)
 from microstacknode.hardware.display.sprite import StringSprite
 
 
@@ -15,7 +15,7 @@ if __name__ == '__main__':
             xy_str = 'x:{:.2f} y:{:.2f}'.format(x, y)
             z_str = 'z:{:.2f}'.format(z)
 
-            font = MinecraftiaFont()
+            font = BlockFont()
             xy_str_sprite = StringSprite(xy_str, 'R', font)
             z_str_sprite = StringSprite(z_str, 'R', font)
 

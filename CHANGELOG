@@ -1,6 +1,21 @@
 Change Log
 ==========
 
+v0.4.0
+------
+- mma8452 accelerometer now returns dictionary for xyz instead of tuple.
+  This was confusing as it's unexpected for a method to return three values.
+  *Explicit is better than implicit.*
+- Improved docs -- uploaded to readthedocs.
+
+v0.3.0
+------
+- Fixed mma8452 accelerometer bug. `get_xyz()` now returns values in Gs no
+  matter what the range is set as. That is, set the range to be 8G and the
+  `get_xyz()` will return 1 is the accelerometer is only experiencing 1G.
+- Changed mma8452 register implementation.
+- Added mma8452 SI units method.
+
 v0.2.0
 ------
 - Moved internal hardware drivers to hardware directory.
