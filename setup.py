@@ -44,4 +44,5 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     keywords='microstack raspberrypi openlx',
+    requires=['microstackcommon (>=0.2.0)']
 )
