@@ -40,20 +40,10 @@ CMD_SET_VCOMH_DESELECT_LEVEL = 0xDB
 class SSD1306(I2CMaster):
     """SSD1306 128x64 dot matrix OLED."""
 
-    # def __init__(self, i2c_bus=DEFAULT_I2C_BUS):
-        # self.i2c_master = I2CMaster(i2c_bus)
-        # self._clear_buffer()
-
-    # def __enter__(self):
-    #     self.init()
-    #     return self
-
-    # def __exit__(self, type, value, traceback):
-    #     self.close()
-
-    def open(self):
-        super().open()
+    def __enter__(self):
+        self = super().__enter__()
         self.init()
+        return self
 
     def _send_command(self, *cmd):
         # co = 0

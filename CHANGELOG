@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+v0.4.0
+------
+- mma8452 accelerometer now returns dictionary for xyz instead of tuple.
+  This was confusing as it's unexpected for a method to return three values.
+  *Explicit is better than implicit.*
+- Improved docs -- uploaded to readthedocs.
+
 v0.3.0
 ------
 - Fixed mma8452 accelerometer bug. `get_xyz()` now returns values in Gs no
