@@ -36,7 +36,7 @@ Install microstacknode using pip::
 
 
 Note: Generally, it's best to install packages into a
-[virtual environment](http://docs.python-guide.org/en/latest/dev/virtualenvs/)
+`virtual environment <http://docs.python-guide.org/en/latest/dev/virtualenvs/>`_
 when using `pip` so that they remain project specific.
 
 Install `virtualenv`::

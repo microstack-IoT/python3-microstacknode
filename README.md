@@ -5,7 +5,7 @@ GPS, etc).
 
 Documentation
 =============
-[http://python3-microstacknode.readthedocs.org/en/latest/index.html](http://python3-microstacknode.readthedocs.org/en/latest/index.html)
+[http://python3-microstacknode.readthedocs.org](http://python3-microstacknode.readthedocs.org)
 
 
 Controlling the on board OK LED (Raspberry Pi)
