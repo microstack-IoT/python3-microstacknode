@@ -1,17 +1,7 @@
 ############
 Installation
 ############
-Make sure you are using the lastest version of Raspbian::
-
-    $ sudo apt-get update
-    $ sudo apt-get upgrade
-
-Install ``microstacknode`` for Python 3 with the following
-command::
-
-    $ sudo apt-get install python3-microstacknode
-
-Then enable I2C and SPI by running::
+First, make sure you have enabled I2C and SPI by running::
 
     sudo raspi-config
 
@@ -21,6 +11,61 @@ And then navigating to::
     Advanced Options > SPI > Enable
 
 Then reboot.
+
+You can install `microstacknode` with either `apt-get` or `pip`.
+
+apt-get
+-------
+Make sure you are using the lastest version of Raspbian::
+
+    $ sudo apt-get update && sudo apt-get upgrade
+
+Install ``microstacknode`` for Python 3 with the following command::
+
+    $ sudo apt-get install python3-microstacknode
+
+pip
+---
+Make sure `pip` is installed::
+
+    sudo apt-get install python3-pip
+
+Install microstacknode using pip::
+
+    sudo pip-3.2 install microstackcommon microstacknode
+
+
+Note: Generally, it's best to install packages into a
+[virtual environment](http://docs.python-guide.org/en/latest/dev/virtualenvs/)
+when using `pip` so that they remain project specific.
+
+Install `virtualenv`::
+
+    sudo pip-3.2 install virtualenv
+
+Move into your project and create the virtual environment::
+
+    cd my_project_directory/
+    virtualenv-3.2 venv
+
+Activate the virtual environment::
+
+    source venv/bin/activate
+
+You should notice that your command prompt has changed. `pip` will now
+install all packages into the virtual environment instead of littering
+your system files::
+
+    pip install microstackcommon microstacknode
+
+Now you can work on your application with microstack. Once you're done,
+deactivate the virtual environment::
+
+    deactivate
+
+You will not be able to use packages installed in the virtual environment
+until you activate it again (`source venv/bin/activate`).
+
 
 GPS
 ===
