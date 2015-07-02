@@ -5,10 +5,15 @@ First, make sure you have enabled I2C and SPI by running::
 
     sudo raspi-config
 
-And then navigating to::
+and then navigating to::
 
-    Advanced Options > I2C > Enable
-    Advanced Options > SPI > Enable
+    Advanced Options > Would you like the I2C interface to be enabled? > Yes
+    Would you like the I2C kernel module to be loaded by default? > Yes
+
+and::
+
+    Advanced Options > Would you like the SPI interface to be enabled? > Yes
+    Would you like the SPI kernel module to be loaded by default? > Yes
 
 Then reboot.
 
