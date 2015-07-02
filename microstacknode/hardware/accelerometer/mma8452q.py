@@ -79,12 +79,9 @@ XYZ_DATA_CFG_FSR_4G = 0x01
 XYZ_DATA_CFG_FSR_8G = 0x02
 
 
-<<<<<<< HEAD
-=======
 STANDARD_GRAVITY = 9.80665
 
 
->>>>>>> preston
 class MMA8452Q(I2CMaster):
     """Freescale MMA8452Q accelerometer.
 
@@ -124,10 +121,6 @@ class MMA8452Q(I2CMaster):
         self._xyz_data_cfg_value = 0
         self._ctrl_reg1_value = 0
 
-<<<<<<< HEAD
-    def open(self):
-        super().open()
-=======
     def __enter__(self):
         self = super().__enter__()
         self.init()
@@ -135,37 +128,27 @@ class MMA8452Q(I2CMaster):
 
     def init(self):
         """Initalises the accelerometer with some default values."""
->>>>>>> preston
         self.standby()
         self.set_output_data_rate(800)  # Hz
         self.set_g_range(2)
         self.activate()
 
     def reset(self):
-<<<<<<< HEAD
-=======
         """Resets the accelerometer."""
->>>>>>> preston
         self._ctrl_reg1_value = 0
         self.ctrl_reg1.set(self._ctrl_reg1_value)
 
     def activate(self):
-<<<<<<< HEAD
-=======
         """Start recording the accelerometer values. Call this after
         changing any settings.
         """
->>>>>>> preston
         self._ctrl_reg1_value |= CTRL_REG1_SET_ACTIVE
         self.ctrl_reg1.set(self._ctrl_reg1_value)
 
     def standby(self):
-<<<<<<< HEAD
-=======
         """Stop recording the accelerometer values. Call this before
         changing any settings.
         """
->>>>>>> preston
         self._ctrl_reg1_value &= 0xff ^ CTRL_REG1_SET_ACTIVE
         self.ctrl_reg1.set(self._ctrl_reg1_value)
 
@@ -238,13 +221,6 @@ class MMA8452Q(I2CMaster):
         # multiply each xyz value by the standard gravity value
         return {direction: magnitude * STANDARD_GRAVITY
                 for direction, magnitude in xyz.items()}
-
-    def get_xyz_ms2(self):
-        """Returns the x, y, z values in SI units (m/s^2)."""
-        standard_gravity = 9.80665
-        x, y, z = map(lambda v: v * standard_gravity,
-                      self.get_xyz(raw=False, res12=True))
-        return x, y, z
 
     def set_g_range(self, g_range):
         """Sets the force range (in Gs -- where 1G is the force of gravity).

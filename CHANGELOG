@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+v0.4.4
+------
+- Some more fiddling for PyPi.
+
 v0.4.0
 ------
 - mma8452 accelerometer now returns dictionary for xyz instead of tuple.
