@@ -19,8 +19,8 @@ Then reboot.
 
 You can install `microstacknode` with either `apt-get` or `pip`.
 
-apt-get
--------
+Installing with `apt-get`
+-------------------------
 Make sure you are using the lastest version of Raspbian::
 
     $ sudo apt-get update && sudo apt-get upgrade
@@ -29,8 +29,13 @@ Install ``microstacknode`` for Python 3 with the following command::
 
     $ sudo apt-get install python3-microstacknode
 
-pip
----
+
+Installing with `pip`
+---------------------
+.. warning:: Do not install `microstacknode` with both `apt-get` and `pip`
+             as unexpected things will happen. Consider using virtual
+             environments.
+
 Make sure `pip` is installed::
 
     sudo apt-get install python3-pip
@@ -40,7 +45,10 @@ Install microstacknode using pip::
     sudo pip-3.2 install microstackcommon microstacknode
 
 
-Note: Generally, it's best to install packages into a
+Installing with `pip` (with Virtual Environments)
+-------------------------------------------------
+.. note ::
+Generally, it's best to install packages into a
 `virtual environment <http://docs.python-guide.org/en/latest/dev/virtualenvs/>`_
 when using `pip` so that they remain project specific.
 
