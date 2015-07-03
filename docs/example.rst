@@ -70,7 +70,7 @@ MMA8452 Accelerometer
 
     >>> import microstacknode.hardware.accelerometer.mma8452q
     >>> accelerometer = microstacknode.hardware.accelerometer.mma8452q.MMA8452Q()
-    >>> accelerometer.init()
+    >>> accelerometer.open()
 
     >>> accelerometer.get_xyz()
     {'x': 0.00927734375, 'y': 0.00341796875, 'z': 0.49853515625}
@@ -79,7 +79,7 @@ MMA8452 Accelerometer
     {'x': -0.0078125, 'y', -0.0078125, 'z': 0.5078125}
 
 
-You don't have to call `init()` if you're using the `with` statement::
+You don't have to call `open()` if you're using the `with` statement::
 
     import time
     from microstacknode.hardware.accelerometer.mma8452q import MMA8452Q
@@ -112,13 +112,13 @@ SHT21 Temperature and Humidity Sensor
 =====================================
 This behaves very similar to the accelerometer::
 
-    >>> import microstacknode.hardware.humiditytemperature.sht21 import SHT21
+    >>> from microstacknode.hardware.humiditytemperature.sht21 import SHT21
     >>> sht21 = SHT21()
-    >>> sht21.init()
+    >>> sht21.open()
     >>> sht21.get_humidity()
     >>> sht21.get_temperature()
 
-or even using `with` (Python-magic will call `init()`)::
+or even using `with` (Python-magic will call `open()`)::
 
     with SHT21() as htsensor:
         while True:
