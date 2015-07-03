@@ -1,3 +1,2 @@
 include README.md
 include CHANGELOG
-include microstacknode/hardware/__init__.py

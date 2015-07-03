@@ -29,6 +29,7 @@ setup(
     license='GPLv3+',
     url='https://github.com/microstack/microstacknode',
     packages=['microstacknode',
+              'microstacknode.hardware',
               'microstacknode.hardware.gps',
               'microstacknode.hardware.accelerometer',
               'microstacknode.hardware.display',
