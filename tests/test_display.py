@@ -58,7 +58,15 @@ class TestSSD1306(unittest.TestCase):
 
     def test_set_pixel(self):
         with microstacknode.hardware.display.ssd1306.SSD1306() as ssd1306:
+            print("init")
+            ssd1306.init()
+            time.sleep(0.5)
+            print("clear display")
+            ssd1306.clear_display()
+            time.sleep(0.5)
+            print("set")
             ssd1306.set_pixel(0, 0, 1)
+            time.sleep(0.5)
 
 
 if __name__ == "__main__":

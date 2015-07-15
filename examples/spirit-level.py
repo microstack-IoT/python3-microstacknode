@@ -28,10 +28,10 @@ def draw_dot(display, x_angle, y_angle, z_angle):
 if __name__ == '__main__':
     with SSD1306() as display, MMA8452Q() as accelerometer:
         while True:
-            x, y, z = accelerometer.get_xyz()
-            x_angle = x * -180
-            y_angle = y * -180
-            z_angle = 90 - (180 * z)
+            xyz = accelerometer.get_xyz()
+            x_angle = xyz['x'] * -180
+            y_angle = xyz['y'] * -180
+            z_angle = 90 - (180 * xyz['z'])
             display.clear_display(update_display=False)
             draw_circle(display)
             draw_dot(display, x_angle, y_angle, z_angle)

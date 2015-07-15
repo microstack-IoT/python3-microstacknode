@@ -5,15 +5,16 @@ parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, parentdir)
 import time
 import unittest
-import microstacknode.accelerometer.mma8452q
+import microstacknode.hardware.accelerometer.mma8452q
 
 
 class TestMMA8452Q(unittest.TestCase):
-    def setUp(self):
-        self.accelerometer = microstacknode.accelerometer.mma8452q.MMA8452Q()
-        self.accelerometer.init()
+
+    # def test_with(self):
 
     def test_MMA8452Q(self):
+        self.accelerometer = microstacknode.hardware.accelerometer.mma8452q.MMA8452Q()
+        self.accelerometer.init()
         try:
             while True:
                 x, y, z = self.accelerometer.get_xyz(res12=False)
