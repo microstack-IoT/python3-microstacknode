@@ -141,7 +141,8 @@ class CharSprite(Sprite):
 
     def render_char(self, character):
         for i in range(self.height):
-            self.set_row(i, self.font.get_char_map(character)[i])
+            self.set_row(self.height-i-1,
+                         self.font.get_char_map(character)[i])
 
 
 class StringSprite(Sprite):

@@ -37,12 +37,14 @@ CMD_SET_COM_PINS_HARDWARE_CONFIGURATION = 0xDA
 CMD_SET_VCOMH_DESELECT_LEVEL = 0xDB
 CMD_SET_CHARGE_PUMP = 0x8D
 
+
 class SSD1306_96x16(I2CMaster):
     """SSD1306 96x16 dot matrix OLED."""
 
     pixel_width = 96
     pixel_height = 16
     num_pages = pixel_height / 8 # one page is 8 bits high
+    rotate_display_180 = True
 
     def send_command(self, *cmd):
         # co = 0
@@ -70,10 +72,11 @@ class SSD1306_96x16(I2CMaster):
         self.send_command(CMD_SET_CHARGE_PUMP, 0x14) # enable charge pump
         self.send_command(CMD_SET_MEM_ADDR_MODE, 0x00) # horizontal addressing
         self.send_command(CMD_SET_SEGMENT_REMAP_COL_127) # set segment remap
-        # Flip display
-        self.send_command(CMD_SET_COM_OUTPUT_SCAN_DIRECTION_TO_0)
-        # self.send_command(CMD_SET_COM_OUTPUT_SCAN_DIRECTION_FROM_0)
-        # self.send_command(CMD_SET_COM_PINS_HARDWARE_CONFIGURATION, 0x02)
+        if self.rotate_display_180:
+            # Flip display (reverse buffer later)
+            self.send_command(CMD_SET_COM_OUTPUT_SCAN_DIRECTION_TO_0)
+        else:
+            self.send_command(CMD_SET_COM_OUTPUT_SCAN_DIRECTION_FROM_0)
         self.send_command(CMD_SET_COM_PINS_HARDWARE_CONFIGURATION, 0x02)
         self.send_command(CMD_SET_CONTRAST_CONTROL_BANK0, 0x8F)
         self.send_command(CMD_SET_PRE_CHARGE_PERIOD, 0xF1)
@@ -108,12 +111,14 @@ class SSD1306_96x16(I2CMaster):
         self.send_command(CMD_SET_COL_ADDR, 0, self.pixel_width-1)
         # Same with pages. Each page is eight bits tall (so 2 pages for 16px)
         self.send_command(CMD_SET_PAGE_ADDR, 0, 1)
-        # self.send_data(*self._buffer)
-        # flip buffer
-        pages = [list(reversed(self._buffer[:int(self.pixel_width)])),
-                 list(reversed(self._buffer[int(self.pixel_width):]))]
-        buf = pages[0] + pages[1]
-        self.send_data(*buf)
+        if self.rotate_display_180:
+            # flip buffer
+            pages = [list(reversed(self._buffer[:int(self.pixel_width)])),
+                     list(reversed(self._buffer[int(self.pixel_width):]))]
+            buf = pages[0] + pages[1]
+            self.send_data(*buf)
+        else:
+            self.send_data(*self._buffer)
 
     def clear_display(self):
         """Clears the display."""
