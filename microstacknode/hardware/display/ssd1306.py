@@ -2,12 +2,7 @@ import time
 import math
 from microstackcommon.i2c import I2CMaster, writing_bytes, writing, reading
 
-# TODO not sure why these values
-WIDTH = 128
-NUM_PAGES = 8
 
-
-DEFAULT_I2C_BUS = 1
 I2C_ADDR = 0x3C
 
 # Commands
@@ -53,19 +48,19 @@ class SSD1306_96x16(I2CMaster):
         control = 0x00
         self.transaction(writing_bytes(I2C_ADDR, control, *cmd))
 
-    def send_data(self, *cmd):
+    def send_data(self, *data):
         # co = 0
         # dc = 1
         # control = (co << 7) | (dc << 6)
         control = 0x40
-        self.transaction(writing_bytes(I2C_ADDR, control, *cmd))
+        self.transaction(writing_bytes(I2C_ADDR, control, *data))
 
     def init(self):
         """Initialises and clears the screen."""
         self.set_display_enabled(False)
         # set display clock divide ratio
         # upper nibble: oscillator freq, lowser nibble: divider
-        self.send_command(CMD_SET_DISPLAY_CLOCK_DIVIDE_RATIO, 0x60)
+        self.send_command(CMD_SET_DISPLAY_CLOCK_DIVIDE_RATIO, 0x80)
         self.send_command(CMD_SET_MULTIPLEX_RATIO, 0x0F)
         self.send_command(CMD_SET_DISPLAY_OFFSET, 0x00)
         self.send_command(CMD_SET_DISPLAY_START_LINE | 0)
@@ -78,7 +73,7 @@ class SSD1306_96x16(I2CMaster):
         else:
             self.send_command(CMD_SET_COM_OUTPUT_SCAN_DIRECTION_FROM_0)
         self.send_command(CMD_SET_COM_PINS_HARDWARE_CONFIGURATION, 0x02)
-        self.send_command(CMD_SET_CONTRAST_CONTROL_BANK0, 0x8F)
+        self.send_command(CMD_SET_CONTRAST_CONTROL_BANK0, 0xAF)
         self.send_command(CMD_SET_PRE_CHARGE_PERIOD, 0xF1)
         self.send_command(CMD_SET_VCOMH_DESELECT_LEVEL, 0x40)
         self.send_command(CMD_ENTIRE_DISPLAY_RAM)

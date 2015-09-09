@@ -1,5 +1,6 @@
 """Sprites are two dimensional drawings/characters/letters."""
 
+
 class Sprite(object):
     """A two dimensional sprite."""
 
@@ -112,8 +113,10 @@ class Sprite(object):
             self.invert_diagonal()
 
     def draw_rectangle(self, x, y, width, height, line_weight=0):
-        """Draw a rectangle on this sprite."""
-        if not line_weight:
+        """Draw a rectangle on this sprite. If line_weight is 0 then fill
+        the rectangle.
+        """
+        if line_weight <= 0:
             for j in range(height):
                 for i in range(width):
                     self.set_pixel(x+i, y+j, 1)
