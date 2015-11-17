@@ -2,7 +2,7 @@ import sys
 import time
 import select
 import microstackcommon.gpio
-from microstackcommon.i2c import I2CMaster, writing_bytes, writing, reading
+import microstackcommon.i2c
 
 
 DEFAULT_I2C_BUS = 1
@@ -101,13 +101,25 @@ class LSM9DS0():
         http://www.st.com/web/en/catalog/sense_power/FM89/SC1448/PF258556
         http://www.st.com/st-web-ui/static/active/en/resource/technical/document/datasheet/DM00087365.pdf
 
+    The following attributes are configurable:
+
+               i2c_master - Controls which I2CMaster bus is used to talk
+                            to the device.
+              i2c_reading - Generates I2C read messages for i2c_master.
+        i2c_writing_bytes - Generates I2C write messages for i2c_master.
+              i2c_addr_xm - I2C Address of the accelerometer.
+               i2c_addr_g - I2C Address of the Gyroscope.
     """
 
     def __init__(self,
-                 i2c_master=I2CMaster(DEFAULT_I2C_BUS),
+                 i2c_master=microstackcommon.i2c.I2CMaster(DEFAULT_I2C_BUS),
+                 i2c_reading=microstackcommon.i2c.reading,
+                 i2c_writing_bytes=microstackcommon.i2c.writing_bytes,
                  i2c_addr_xm=DEFAULT_I2C_ADDR_XM,
                  i2c_addr_g=DEFAULT_I2C_ADDR_G):
         self.i2c_master = i2c_master
+        self.i2c_reading = i2c_reading
+        self.i2c_writing_bytes = i2c_writing_bytes
         self.i2c_addr_xm = i2c_addr_xm
         self.i2c_addr_g = i2c_addr_g
 
@@ -139,8 +151,8 @@ class LSM9DS0():
 
     def get(self, device_address, register_address):
         return self.i2c_master.transaction(
-            writing_bytes(device_address, register_address),
-            reading(device_address, 1))[0][0]
+            self.i2c_writing_bytes(device_address, register_address),
+            self.i2c_reading(device_address, 1))[0][0]
 
     def get_xm(self, register_address):
         return self.get(self.i2c_addr_xm, register_address)
@@ -154,8 +166,8 @@ class LSM9DS0():
         """
         RAAI = 0x80  # Register Address Auto Increment
         return self.i2c_master.transaction(
-            writing_bytes(device_address, RAAI | register_address),
-            reading(device_address, num_registers))[0]
+            self.i2c_writing_bytes(device_address, RAAI | register_address),
+            self.i2c_reading(device_address, num_registers))[0]
 
     def get_bulk_xm(self, register_address, num_registers):
         return self.get_bulk(self.i2c_addr_xm, register_address, num_registers)
@@ -165,7 +177,7 @@ class LSM9DS0():
 
     def set(self, device_address, register_address, v):
         self.i2c_master.transaction(
-            writing_bytes(device_address, register_address, v))
+            self.i2c_writing_bytes(device_address, register_address, v))
 
     def set_xm(self, register_address, v):
         self.set(self.i2c_addr_xm, register_address, v)
