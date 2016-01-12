@@ -1,12 +1,12 @@
 '''Prints the latitude and longitude every second.'''
 import time
-import microstacknode.gps.l80gps
+from microstacknode.hardware.gps.l80gps import L80GPS
 
 
 if __name__ == '__main__':
-    gps = microstacknode.gps.l80gps.L80GPS()
+    gps = L80GPS()
     while True:
-        gpgll = gps.gpgll
+        gpgll = gps.get_gpgll()
         print('latitude:  {}'.format(gpgll['latitude']))
         print('longitude: {}'.format(gpgll['longitude']))
         print()
