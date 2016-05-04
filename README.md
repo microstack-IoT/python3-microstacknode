@@ -3,6 +3,7 @@ microstack-node
 Common functions for interacting with Microstack node boards (Accelerometer,
 GPS, etc).
 
+
 Documentation
 =============
 [http://microstack-iot.github.io/](http://microstack-iot.github.io/)
@@ -10,6 +11,7 @@ Documentation
 You can also find the documentation installed at:
 
     /usr/share/doc/python3-microstacknode/
+
 
 Install
 =======
