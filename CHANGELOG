@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+v0.4.6
+------
+- Added check for Raspberry Pi 3 in l80gps. RPi 3 uses `/dev/ttyS0` for
+  the serial device instead of `/dev/ttyAMA0`.
+
 v0.4.4
 ------
 - Some more fiddling for PyPi.

@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-# http://www.gsm-rainbow.ru/sites/default/files/
-# l80_gps_protocol_specification_v1.0.pdf
+# http://www.gsm-rainbow.ru/sites/default/files/l80_gps_protocol_specification_v1.0.pdf
+import re
 import io
 import sys
 import time
@@ -25,6 +24,25 @@ PMTK_Q_LOCUS_DATA_FULL = '$PMTK622,0*28\r\n'
 PMTK_Q_LOCUS_DATA_PARTIAL = '$PMTK622,1*29\r\n'
 
 
+# setup default GPS device (different on Raspberry Pi 3 and above)
+def get_rpi_revision():
+    """Returns the version number from the revision line."""
+    for line in open("/proc/cpuinfo"):
+        if "Revision" in line:
+            return re.sub('Revision\t: ([a-z0-9]+)\n', r'\1', line)
+
+
+rpi_revision = get_rpi_revision()
+if (rpi_revision and
+      (rpi_revision != 'Beta') and
+      (int('0x'+rpi_revision, 16) >= 0xa02082)):
+    # RPi 3 and above
+    DEFAULT_GPS_DEVICE = '/dev/ttyS0'
+else:
+    # RPi 2 and below
+    DEFAULT_GPS_DEVICE = '/dev/ttyAMA0'
+
+
 class NMEAPacketNotFoundError(Exception):
     pass
 
@@ -43,7 +61,7 @@ class L80GPS(object):
     becasue of a poor GPS reception - try moving the GPS module outside).
     """
 
-    def __init__(self, device="/dev/ttyAMA0"):
+    def __init__(self, device=DEFAULT_GPS_DEVICE):
         self.device_tx_rx = serial.Serial(device,
                                           baudrate=9600,
                                           bytesize=8,
