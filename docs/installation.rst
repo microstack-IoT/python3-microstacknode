@@ -6,34 +6,30 @@ Make sure you are using the lastest version of Raspbian::
     $ sudo apt-get update
     $ sudo apt-get upgrade
 
-Install ``microstacknode`` for Python 3 with the following
-command::
+Install ``microstacknode`` for Python 3 with the following command::
 
     $ sudo apt-get install python3-microstacknode
 
+Or install with ``pip``::
+
+    $ sudo apt-get install pip3
+    $ pip3 install microstacknode
+
+
 GPS
 ===
-The GPS uses the serial port which is usually configured to output logging
-data from the Raspberry Pi (for debugging). This needs to be disabled
-before the GPS can be used.
+The GPS uses the serial port. By default it is configured to output the
+login shell. You must disable this before GPS will work. To do so, run::
 
-Comment out the following line in `/etc/inittab` by putting a hash in
-front of it so that it goes from this::
+    sudo raspi-config
 
-    T0:23:respawn:/sbin/getty -L ttyAMA0 115200 vt100
+Navigate to ``Advanced Options`` > ``Serial``, disable the login shell
+and then reboot.
 
-To this::
-
-    #T0:23:respawn:/sbin/getty -L ttyAMA0 115200 vt100
-
-Also, remove all references to ttyAMA0 in `/boot/cmdline.txt` so that it
-goes from this::
-
-    dwc_otg.lpm_enable=0 console=ttyAMA0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline rootwait
-
-to this::
-
-    dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline rootwait
+.. note:: If you're using a Raspberry Pi 3 you will also need to fix the
+          CPU `core_freq` at 250 otherwise the serial port baud rate
+          will not stay constant. To do this add ``core_freq=250`` to
+          ``/boot/config.txt``.
 
 
 Testing
@@ -65,8 +61,12 @@ or::
 
     $ cgps -s
 
+Replace ``/dev/ttyAMA0`` with ``/dev/ttyS0`` if you're using a
+Raspberry Pi 3.
+
+
 Automatically Starting GPS
---------------------------
+==========================
 Reconfigure the GPS daemon and choose <yes> when asked if you want to
 start `gpsd` automatically (use the defaults for the remaining options)::
 

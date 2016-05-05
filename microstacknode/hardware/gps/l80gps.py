@@ -33,7 +33,9 @@ def get_rpi_revision():
 
 
 rpi_revision = get_rpi_revision()
-if rpi_revision and rpi_revision != 'Beta' and int('0x'+rpi_revision, 16) >= 0xa02082:
+if (rpi_revision and
+      (rpi_revision != 'Beta') and
+      (int('0x'+rpi_revision, 16) >= 0xa02082)):
     # RPi 3 and above
     DEFAULT_GPS_DEVICE = '/dev/ttyS0'
 else:
@@ -59,7 +61,7 @@ class L80GPS(object):
     becasue of a poor GPS reception - try moving the GPS module outside).
     """
 
-    def __init__(self, device="/dev/ttyAMA0"):
+    def __init__(self, device=DEFAULT_GPS_DEVICE):
         self.device_tx_rx = serial.Serial(device,
                                           baudrate=9600,
                                           bytesize=8,
